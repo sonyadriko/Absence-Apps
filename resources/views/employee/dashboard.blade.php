@@ -11,34 +11,63 @@
         $userPermissions = $rbac->getUserPermissions(auth()->user());
     @endphp
 
-    <!-- Welcome Section -->
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-primary-custom">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                Dashboard
+            </h1>
+            <p class="text-muted mb-0">Welcome back, {{ auth()->user()->name }}!</p>
+        </div>
+        <div class="text-end">
+            <div class="small text-muted">
+                <i class="fas fa-clock me-1"></i>{{ now()->format('l, F j, Y') }}
+            </div>
+            <div class="small text-muted">
+                <i class="fas fa-map-marker-alt me-1"></i>{{ now()->format('g:i A') }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Card -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card" style="background: linear-gradient(135deg, #8B4513, #F4A460); color: white;">
-                <div class="card-body">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); color: white;">
+                <div class="card-body py-4">
                     <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h2 class="mb-2">
-                                <i class="fas fa-coffee me-2"></i>
-                                Welcome back, {{ auth()->user()->name }}!
-                            </h2>
-                            <p class="mb-2 opacity-90">
-                                You're logged in as 
-                                @if($primaryRole)
-                                    <span class="badge" style="background-color: {{ $primaryRole->role->color }}; color: white;">
-                                        {{ $primaryRole->role->display_name }}
-                                    </span>
-                                @else
-                                    <span class="badge bg-secondary">Employee</span>
-                                @endif
-                            </p>
-                            <div class="small opacity-75">
-                                <i class="fas fa-clock me-1"></i>{{ now()->format('l, F j, Y - g:i A') }}
+                        <div class="col-md-9">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-lg me-3">
+                                    <img src="https://via.placeholder.com/64x64/FFFFFF/8B4513?text={{ substr(auth()->user()->name, 0, 1) }}" 
+                                         class="rounded-circle" width="64" height="64" alt="Avatar">
+                                </div>
+                                <div>
+                                    <h4 class="mb-1">Good {{ now()->format('A') === 'AM' ? 'Morning' : (now()->format('H') < 17 ? 'Afternoon' : 'Evening') }}, {{ auth()->user()->name }}!</h4>
+                                    <p class="mb-2 opacity-90">
+                                        You're logged in as 
+                                        @if($primaryRole)
+                                            <span class="badge bg-white text-dark px-3 py-1">
+                                                {{ $primaryRole->role->display_name }}
+                                            </span>
+                                        @else
+                                            <span class="badge bg-secondary">Employee</span>
+                                        @endif
+                                    </p>
+                                    <div class="small opacity-75">
+                                        <i class="fas fa-building me-1"></i>
+                                        @if(auth()->user()->employee && auth()->user()->employee->branch)
+                                            {{ auth()->user()->employee->branch->name }}
+                                        @else
+                                            No branch assigned
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-4 text-end">
-                            <div class="fs-1 opacity-50">
-                                <i class="fas fa-user-tie"></i>
+                        <div class="col-md-3 text-end">
+                            <div class="fs-1 opacity-30">
+                                <i class="fas fa-coffee"></i>
                             </div>
                         </div>
                     </div>
