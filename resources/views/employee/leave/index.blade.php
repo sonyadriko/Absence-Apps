@@ -141,6 +141,8 @@
                             <th>End Date</th>
                             <th>Days</th>
                             <th>Status</th>
+                            <th>Next Action</th>
+                            <th>Progress</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -438,7 +440,7 @@ const leavePage = {
         const tbody = document.getElementById('leaveTableBody');
         
         if (!this.state.leaves || this.state.leaves.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No leave requests found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">No leave requests found</td></tr>';
             return;
         }
         
@@ -467,6 +469,12 @@ const leavePage = {
                 <td>
                     <span class="badge ${this.getStatusBadge(leave.status)}">${leave.status}</span>
                     ${leave.approved_by ? `<br><small class="text-muted">by ${leave.approver?.name}</small>` : ''}
+                </td>
+                <td>
+                    ${this.renderNextAction(leave)}
+                </td>
+                <td>
+                    ${this.renderProgress(leave)}
                 </td>
                 <td>
                     <div class="btn-group btn-group-sm">
@@ -740,6 +748,84 @@ const leavePage = {
             'cancelled': 'bg-secondary'
         };
         return badges[status] || 'bg-secondary';
+    },
+
+    // NEW: Render Next Action column
+    renderNextAction(leave) {
+        if (!leave.next_approver) {
+            if (leave.status === 'approved') {
+                return '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Fully Approved</span>';
+            } else if (leave.status === 'rejected') {
+                return '<span class="badge bg-danger"><i class="fas fa-times me-1"></i>Request Rejected</span>';
+            } else if (leave.status === 'cancelled') {
+                return '<span class="badge bg-secondary"><i class="fas fa-ban me-1"></i>Cancelled</span>';
+            }
+            return '<span class="text-muted">-</span>';
+        }
+
+        const approver = leave.next_approver;
+        const icon = this.getApproverIcon(approver.role);
+        
+        if (approver.action_needed) {
+            return `
+                <div class="d-flex align-items-center">
+                    <i class="${icon} text-warning me-2"></i>
+                    <div>
+                        <div class="fw-medium text-warning">Waiting for:</div>
+                        <small class="text-muted">${approver.name}</small>
+                    </div>
+                </div>
+            `;
+        } else {
+            return `
+                <div class="d-flex align-items-center text-muted">
+                    <i class="${icon} me-2"></i>
+                    <div>
+                        <small>${approver.name}</small>
+                    </div>
+                </div>
+            `;
+        }
+    },
+
+    // NEW: Render Progress column
+    renderProgress(leave) {
+        const progress = leave.approval_progress || 0;
+        const currentStep = leave.current_step || 'Unknown status';
+        
+        return `
+            <div class="progress-container">
+                <div class="progress mb-1" style="height: 8px;">
+                    <div class="progress-bar ${this.getProgressColor(progress)}" 
+                         role="progressbar" 
+                         style="width: ${progress}%" 
+                         aria-valuenow="${progress}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                    </div>
+                </div>
+                <small class="text-muted" title="${currentStep}">${progress}% Complete</small>
+            </div>
+        `;
+    },
+
+    // Helper function for approver icons
+    getApproverIcon(role) {
+        const icons = {
+            'pengelola': 'fas fa-store',
+            'branch_manager': 'fas fa-building', 
+            'hr_central': 'fas fa-users',
+            'system': 'fas fa-cog'
+        };
+        return icons[role] || 'fas fa-user';
+    },
+
+    // Helper function for progress bar colors
+    getProgressColor(progress) {
+        if (progress >= 100) return 'bg-success';
+        if (progress >= 75) return 'bg-info';
+        if (progress >= 50) return 'bg-warning';
+        return 'bg-secondary';
     }
 };
 

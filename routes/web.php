@@ -7,6 +7,7 @@ use App\Http\Controllers\Employee\DashboardController;
 use App\Http\Controllers\HRCentral\BranchController;
 use App\Http\Controllers\HRCentral\EmployeeController;
 use App\Http\Controllers\HRCentral\AttendanceController as HRCentralAttendanceController;
+use App\Http\Controllers\ApprovalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -119,6 +120,9 @@ Route::middleware(['auth'])->group(function () {
         return view('employee.leave.index');
     })->name('leaves.index');
     
+    // Approval Center
+    Route::get('/approvals', [ApprovalController::class, 'index'])->name('approvals.index');
+    
     Route::get('/reports', function() {
         return view('employee.dashboard');
     })->name('reports.index');
@@ -147,5 +151,13 @@ Route::prefix('api')->middleware(['auth'])->group(function () {
         Route::get('employees/{employee}/attendance', [HRCentralAttendanceController::class, 'getEmployeeAttendanceDetails']);
         Route::get('attendance/daily-summary', [HRCentralAttendanceController::class, 'dailySummary']);
         Route::get('attendance/stats', [HRCentralAttendanceController::class, 'getStats']);
+    });
+    
+    // Approval APIs
+    Route::prefix('approvals')->group(function () {
+        Route::get('/pending', [ApprovalController::class, 'getPendingRequests']);
+        Route::get('/{leave_request}', [ApprovalController::class, 'getLeaveRequestDetails']);
+        Route::post('/{leave_request}/approve', [ApprovalController::class, 'approve']);
+        Route::post('/{leave_request}/reject', [ApprovalController::class, 'reject']);
     });
 });

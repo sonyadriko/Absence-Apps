@@ -696,8 +696,14 @@
                     
                     <!-- Common menus for all roles -->
                     @if($rbac->userHasPermission(auth()->user(), 'leave.create.own') || $rbac->userHasPermission(auth()->user(), 'leave.view.branch'))
-                        <a href="{{ route('leaves.index') }}" class="nav-link">
+                        <a href="{{ route('leaves.index') }}" class="nav-link {{ request()->routeIs('leaves.index') ? 'active' : '' }}">
                             <i class="fas fa-calendar-alt"></i><span>Leave Requests</span>
+                        </a>
+                    @endif
+                    
+                    @if($rbac->userHasPermission(auth()->user(), 'leave.approve.level1') || $rbac->userHasPermission(auth()->user(), 'leave.approve.level2') || $rbac->userHasPermission(auth()->user(), 'leave.approve.final'))
+                        <a href="{{ route('approvals.index') }}" class="nav-link {{ request()->routeIs('approvals.*') ? 'active' : '' }}" data-title="Approval Center">
+                            <i class="fas fa-clipboard-check"></i><span>Approvals</span>
                         </a>
                     @endif
                     

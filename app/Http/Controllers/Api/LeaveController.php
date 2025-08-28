@@ -47,6 +47,9 @@ class LeaveController extends ApiController
 
         // Transform the data for frontend compatibility
         $leaves->getCollection()->transform(function ($leave) {
+            $nextApprover = $leave->getNextApprover();
+            $timeline = $leave->getApprovalTimeline();
+            
             return [
                 'id' => $leave->id,
                 'leave_type' => $leave->leaveType->code,
@@ -69,6 +72,12 @@ class LeaveController extends ApiController
                 'rejection_reason' => $leave->rejection_reason,
                 'approver' => $leave->final_approved_by ? ['name' => 'Manager'] : null,
                 'rejector' => $leave->rejected_by ? ['name' => 'Manager'] : null,
+                
+                // NEW: Enhanced tracking info
+                'approval_timeline' => $timeline,
+                'next_approver' => $nextApprover,
+                'approval_progress' => $leave->getApprovalProgress(),
+                'current_step' => $this->getCurrentStepDescription($leave->status),
             ];
         });
 
@@ -324,5 +333,23 @@ class LeaveController extends ApiController
         ];
 
         return $statusMap[$status] ?? $status;
+    }
+
+    /**
+     * Get current step description
+     */
+    private function getCurrentStepDescription($status)
+    {
+        $stepMap = [
+            'pending' => 'Waiting for Store Supervisor approval',
+            'approved_by_pengelola' => 'Waiting for Branch Manager approval',
+            'approved_by_manager' => 'Waiting for HR Central approval',
+            'approved_by_hr' => 'Finalizing approval',
+            'approved' => 'Fully approved',
+            'rejected' => 'Request rejected',
+            'cancelled' => 'Request cancelled'
+        ];
+
+        return $stepMap[$status] ?? 'Unknown status';
     }
 }
