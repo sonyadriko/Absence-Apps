@@ -193,35 +193,64 @@ window.Utils = {
     // Format date
     formatDate(dateString, options = {}) {
         if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('id-ID', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            ...options
-        });
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                console.error('Invalid date:', dateString);
+                return dateString; // Return original string if invalid
+            }
+            return date.toLocaleDateString('id-ID', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                ...options
+            });
+        } catch (error) {
+            console.error('Date formatting error:', error);
+            return dateString;
+        }
     },
     
     // Format time
     formatTime(timeString) {
         if (!timeString) return '';
-        return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('id-ID', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        try {
+            // Handle different time formats
+            let timeToFormat = timeString;
+            if (timeString.includes('T')) {
+                timeToFormat = timeString.split('T')[1].split('.')[0];
+            }
+            if (!timeToFormat.includes(':')) {
+                return timeString;
+            }
+            const [hours, minutes] = timeToFormat.split(':');
+            return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+        } catch (error) {
+            console.error('Time formatting error:', error);
+            return timeString;
+        }
     },
     
     // Format datetime
     formatDateTime(dateTimeString) {
         if (!dateTimeString) return '';
-        const date = new Date(dateTimeString);
-        return date.toLocaleString('id-ID', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        try {
+            const date = new Date(dateTimeString);
+            if (isNaN(date.getTime())) {
+                console.error('Invalid datetime:', dateTimeString);
+                return dateTimeString;
+            }
+            return date.toLocaleString('id-ID', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (error) {
+            console.error('DateTime formatting error:', error);
+            return dateTimeString;
+        }
     },
     
     // Loading state for buttons

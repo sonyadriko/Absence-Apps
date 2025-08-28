@@ -108,7 +108,8 @@ class ApiController extends Controller
      */
     protected function getAuthenticatedUser()
     {
-        return auth('sanctum')->user();
+        // Try sanctum first (for API calls), then fallback to web session
+        return auth('sanctum')->user() ?? auth()->user();
     }
 
     /**

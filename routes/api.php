@@ -43,7 +43,7 @@ Route::get('health', function () {
 });
 
 // Protected routes (authentication required)
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum,web'])->group(function () {
     
     // Authentication routes
     Route::prefix('auth')->group(function () {
