@@ -30,21 +30,21 @@
                     'title' => 'Management',
                     'items' => [
                         [
-                            'route' => 'management.branches.index',
+                            'route' => 'hr-central.branches.index',
                             'icon' => 'fas fa-store',
                             'label' => 'All Branches',
                             'permission' => 'branch.view.all'
                         ],
                         [
-                            'route' => 'management.employees.index',
+                            'route' => 'hr-central.employees.index',
                             'icon' => 'fas fa-users',
                             'label' => 'All Employees',
                             'permission' => 'employee.view.all'
                         ],
                         [
-                            'route' => 'management.attendance.index',
+                            'route' => 'hr-central.attendance.index',
                             'icon' => 'fas fa-clock',
-                            'label' => 'Global Attendance',
+                            'label' => 'Attendance Management',
                             'permission' => 'attendance.view.all'
                         ],
                         [

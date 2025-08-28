@@ -16,11 +16,20 @@ class Employee extends Model
         'email',
         'phone',
         'position_id',
+        'primary_branch_id',
         'hire_date',
         'status',
+        'employment_type',
+        'hourly_rate',
         'department',
         'address',
-        'avatar'
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'avatar',
+        'face_encoding',
+        'allowed_branches',
+        'settings',
+        'last_attendance_sync'
     ];
 
     protected $casts = [
@@ -51,5 +60,10 @@ class Employee extends Model
     public function schedules()
     {
         return $this->hasMany(Schedule::class);
+    }
+
+    public function primaryBranch()
+    {
+        return $this->belongsTo(Branch::class, 'primary_branch_id');
     }
 }

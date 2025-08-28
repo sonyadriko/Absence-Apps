@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\RoleManagementController;
 use App\Http\Controllers\Employee\DashboardController;
+use App\Http\Controllers\HRCentral\BranchController;
+use App\Http\Controllers\HRCentral\EmployeeController;
+use App\Http\Controllers\HRCentral\AttendanceController as HRCentralAttendanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -69,17 +72,20 @@ Route::middleware(['auth'])->group(function () {
         return view('employee.profile.index');
     })->name('employee.profile.index');
     
-    Route::get('/hr-central/branches', function() {
-        return view('employee.dashboard');
-    })->name('hr-central.branches.index');
+    // HR Central Branch Management (View only)
+    Route::get('/hr-central/branches', [BranchController::class, 'index'])->name('hr-central.branches.index');
+    Route::get('/hr-central/branches/{branch}', [BranchController::class, 'show'])->name('hr-central.branches.show');
+    Route::get('/hr-central/branches/{branch}/edit', [BranchController::class, 'edit'])->name('hr-central.branches.edit');
     
-    Route::get('/hr-central/employees', function() {
-        return view('employee.dashboard');
-    })->name('hr-central.employees.index');
+    // HR Central Employee Management
+    Route::get('/hr-central/employees', [EmployeeController::class, 'index'])->name('hr-central.employees.index');
+    Route::get('/hr-central/employees/{employee}', [EmployeeController::class, 'show'])->name('hr-central.employees.show');
+    Route::get('/hr-central/employees/{employee}/edit', [EmployeeController::class, 'edit'])->name('hr-central.employees.edit');
     
-    Route::get('/hr-central/attendance', function() {
-        return view('employee.dashboard');
-    })->name('hr-central.attendance.index');
+    // HR Central Attendance Management
+    Route::get('/hr-central/attendance', [HRCentralAttendanceController::class, 'index'])->name('hr-central.attendance.index');
+    Route::get('/hr-central/attendance/export', [HRCentralAttendanceController::class, 'export'])->name('hr-central.attendance.export');
+    Route::get('/hr-central/attendance/employees-by-branch', [HRCentralAttendanceController::class, 'getEmployeesByBranch'])->name('hr-central.attendance.employees-by-branch');
     
     Route::get('/branch-manager/branches', function() {
         return view('employee.dashboard');
@@ -120,7 +126,26 @@ Route::middleware(['auth'])->group(function () {
 
 // API routes for AJAX calls
 Route::prefix('api')->middleware(['auth'])->group(function () {
+    // Role Management
     Route::apiResource('admin/roles', RoleManagementController::class);
     Route::post('admin/roles/template', [RoleManagementController::class, 'createFromTemplate']);
     Route::get('admin/roles/export', [RoleManagementController::class, 'export']);
+    
+    // Branch Management
+    Route::apiResource('hr-central/branches', BranchController::class);
+    Route::post('hr-central/branches/{branch}/toggle-status', [BranchController::class, 'toggleStatus']);
+    Route::get('hr-central/branches/{branch}/employees', [BranchController::class, 'employees']);
+    Route::get('hr-central/branches/export', [BranchController::class, 'export']);
+    
+    // Employee Management  
+    Route::get('hr-central/employees/export', [EmployeeController::class, 'export']);
+    Route::apiResource('hr-central/employees', EmployeeController::class);
+    Route::post('hr-central/employees/{employee}/toggle-status', [EmployeeController::class, 'toggleStatus']);
+    
+    // HR Central Attendance AJAX APIs
+    Route::prefix('hr-central')->group(function () {
+        Route::get('employees/{employee}/attendance', [HRCentralAttendanceController::class, 'getEmployeeAttendanceDetails']);
+        Route::get('attendance/daily-summary', [HRCentralAttendanceController::class, 'dailySummary']);
+        Route::get('attendance/stats', [HRCentralAttendanceController::class, 'getStats']);
+    });
 });

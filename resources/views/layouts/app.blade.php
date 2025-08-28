@@ -453,7 +453,8 @@
                     <!-- Role-based Navigation -->
                     @if($primaryRole && $rbac->userHasPermission(auth()->user(), 'branch.view.all'))
                         <!-- HR Central / System Admin menus -->
-                        <a href="{{ route('hr-central.branches.index') }}" class="nav-link">
+                        <a href="{{ route('hr-central.branches.index') }}" 
+                           class="nav-link {{ request()->routeIs('hr-central.branches.*') ? 'active' : '' }}">
                             <i class="fas fa-store"></i><span>All Branches</span>
                         </a>
                         <a href="{{ route('hr-central.employees.index') }}" class="nav-link">

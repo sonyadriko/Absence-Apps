@@ -2,6 +2,76 @@
 
 @section('title', 'My Attendance Records')
 
+@push('styles')
+<style>
+    /* Custom styles for attendance page */
+    .stats-card {
+        transition: transform 0.2s ease-in-out;
+        cursor: pointer;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .table-hover tbody tr {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(139, 69, 19, 0.05);
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .alert-warning {
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+        color: #856404;
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: white;
+    }
+    
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
+    
+    .badge {
+        font-weight: 500;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .btn-group .btn {
+            margin-bottom: 0.5rem;
+            width: 100%;
+        }
+        
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+        
+        .stats-card {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid">
     <!-- Page Header -->
@@ -23,10 +93,13 @@
         </div>
     </div>
 
+    <!-- Missing Checkout Alert (will be added dynamically) -->
+    <div id="missing-checkout-alert"></div>
+
     <!-- Stats Cards -->
     <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="stats-card">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stats-card h-100">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
                         <div class="h4 mb-0 fw-bold" id="totalDays">0</div>
@@ -38,8 +111,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stats-card">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stats-card h-100">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
                         <div class="h4 mb-0 fw-bold text-success" id="presentDays">0</div>
@@ -51,8 +124,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stats-card">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stats-card h-100">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
                         <div class="h4 mb-0 fw-bold text-warning" id="lateDays">0</div>
@@ -64,8 +137,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stats-card">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stats-card h-100">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
                         <div class="h4 mb-0 fw-bold text-info" id="totalHours">0h</div>
@@ -82,7 +155,7 @@
     <!-- Filters -->
     <div class="card mb-4">
         <div class="card-body">
-            <form id="filterForm" class="row g-3">
+            <form id="filterForm" class="row g-3" onsubmit="return false;">
                 <div class="col-md-3">
                     <label for="start-date" class="form-label">Start Date</label>
                     <input type="date" class="form-control" id="start-date" name="start_date">
@@ -102,10 +175,10 @@
                     </select>
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary me-2">
+                    <button type="button" class="btn btn-primary me-2" onclick="applyFilters()">
                         <i class="fas fa-filter me-1"></i>Filter
                     </button>
-                    <button type="button" class="btn btn-outline-secondary" id="reset-filter">
+                    <button type="button" class="btn btn-outline-secondary" onclick="resetFilters()">
                         <i class="fas fa-undo me-1"></i>Reset
                     </button>
                 </div>
@@ -227,400 +300,502 @@
     </div>
 </div>
 
-{{-- Missing Checkout Correction Modal --}}
-@include('attendance.missing-checkout-modal')
 @endsection
 
 @push('scripts')
 <script>
-let attendanceData = {
-    records: [],
-    stats: {},
-    currentPage: 1,
-    totalPages: 1,
-    filters: {},
+// Global variables
+let attendanceRecords = [];
+let currentPage = 1;
+let totalPages = 1;
+let filters = {};
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing attendance page...');
     
-    init() {
-        this.loadAttendanceRecords();
-        this.setupEventListeners();
-        this.initializeDateFilters();
-        this.checkMissingCheckouts();
-    },
+    // Check if API is available
+    if (typeof window.API === 'undefined') {
+        console.error('API not loaded, waiting...');
+        setTimeout(function() {
+            initializePage();
+        }, 1000);
+    } else {
+        initializePage();
+    }
+});
+
+function initializePage() {
+    console.log('Initializing page...');
+    setDefaultDates();
+    setupEventListeners();
+    loadAttendanceRecords();
+    checkMissingCheckouts();
+}
+
+function setupEventListeners() {
+    // Correction type change listener
+    const correctionType = document.getElementById('correction-type');
+    if (correctionType) {
+        correctionType.addEventListener('change', function(e) {
+            const timeFields = document.getElementById('time-fields');
+            if (['missing_checkin', 'missing_checkout', 'wrong_time'].includes(e.target.value)) {
+                timeFields.style.display = 'block';
+            } else {
+                timeFields.style.display = 'none';
+            }
+        });
+    }
     
-    setupEventListeners() {
-        document.getElementById('filterForm').addEventListener('submit', (e) => this.applyFilters(e));
-        document.getElementById('reset-filter').addEventListener('click', () => this.resetFilters());
-        document.getElementById('correction-type').addEventListener('change', (e) => this.toggleTimeFields(e.target.value));
-        document.getElementById('correctionForm').addEventListener('submit', (e) => this.submitCorrection(e));
-    },
+    // Correction form submit
+    const correctionForm = document.getElementById('correctionForm');
+    if (correctionForm) {
+        correctionForm.addEventListener('submit', submitCorrection);
+    }
+}
+
+function setDefaultDates() {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     
-    initializeDateFilters() {
-        // Set default date range to current month
-        const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    document.getElementById('start-date').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('end-date').value = lastDay.toISOString().split('T')[0];
+    
+    filters.start_date = firstDay.toISOString().split('T')[0];
+    filters.end_date = lastDay.toISOString().split('T')[0];
+}
+
+async function loadAttendanceRecords(page = 1) {
+    console.log('Loading attendance records...');
+    const tbody = document.getElementById('attendanceTableBody');
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>';
+    
+    try {
+        const params = {
+            page: page,
+            per_page: 20,
+            ...filters
+        };
         
-        document.getElementById('start-date').value = firstDay.toISOString().split('T')[0];
-        document.getElementById('end-date').value = lastDay.toISOString().split('T')[0];
-    },
-    
-    async loadAttendanceRecords(page = 1) {
-        try {
-            const params = new URLSearchParams({
-                page: page,
-                ...this.filters
-            });
-            
-            const response = await API.get(`/employee/attendance/history?${params}`);
-            this.records = response.data.data || response.data;
-            this.currentPage = response.data.current_page || 1;
-            this.totalPages = response.data.last_page || 1;
-            
-            this.updateTable();
-            this.updatePagination();
-            
-            // Load statistics
-            await this.loadStatistics();
-            
-        } catch (error) {
-            Utils.handleApiError(error, 'Failed to load attendance records');
-            document.getElementById('attendanceTableBody').innerHTML = 
-                '<tr><td colspan="8" class="text-center text-muted py-4">Failed to load records</td></tr>';
-        }
-    },
-    
-    async loadStatistics() {
-        try {
-            const params = new URLSearchParams(this.filters);
-            const response = await API.get(`/employee/attendance/stats?${params}`);
-            this.stats = response.data;
-            this.updateStats();
-        } catch (error) {
-            console.error('Failed to load statistics:', error);
-        }
-    },
-    
-    updateStats() {
-        document.getElementById('totalDays').textContent = this.stats.total_days || 0;
-        document.getElementById('presentDays').textContent = this.stats.present_days || 0;
-        document.getElementById('lateDays').textContent = this.stats.late_days || 0;
-        document.getElementById('totalHours').textContent = this.formatHours(this.stats.total_hours || 0);
-    },
-    
-    updateTable() {
-        const tbody = document.getElementById('attendanceTableBody');
+        const response = await window.API.get('/employee/attendance/history', params);
+        console.log('Attendance response:', response);
         
-        if (!this.records || this.records.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No attendance records found</td></tr>';
-            return;
+        if (response.data) {
+            attendanceRecords = Array.isArray(response.data.data) ? response.data.data : [];
+            currentPage = response.data.current_page || 1;
+            totalPages = response.data.last_page || 1;
+        } else if (Array.isArray(response)) {
+            attendanceRecords = response;
+            currentPage = 1;
+            totalPages = 1;
         }
         
-        tbody.innerHTML = this.records.map(record => `
+        updateTable();
+        updatePagination();
+        loadStatistics();
+        
+    } catch (error) {
+        console.error('Failed to load attendance:', error);
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4"><i class="fas fa-exclamation-triangle me-2"></i>Failed to load records. Please try again.</td></tr>';
+        if (window.Utils) {
+            window.Utils.showToast('Failed to load attendance records', 'error');
+        }
+    }
+}
+
+async function loadStatistics() {
+    try {
+        const response = await window.API.get('/employee/attendance/stats', filters);
+        const stats = response.data || {};
+        
+        document.getElementById('totalDays').textContent = stats.total_days || 0;
+        document.getElementById('presentDays').textContent = stats.present_days || 0;
+        document.getElementById('lateDays').textContent = stats.late_days || 0;
+        document.getElementById('totalHours').textContent = formatHours(stats.total_hours || 0);
+        
+    } catch (error) {
+        console.error('Failed to load statistics:', error);
+    }
+}
+
+function updateTable() {
+    const tbody = document.getElementById('attendanceTableBody');
+    
+    if (!attendanceRecords || attendanceRecords.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4"><i class="fas fa-calendar-times me-2"></i>No attendance records found for the selected period</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = attendanceRecords.map(record => {
+        const recordDate = new Date(record.date + 'T00:00:00');
+        const dayName = recordDate.toLocaleDateString('en', {weekday: 'short'});
+        
+        return `
             <tr>
                 <td>
-                    <div class="fw-medium">${Utils.formatDate(record.date)}</div>
-                    <small class="text-muted">${new Date(record.date).toLocaleDateString('en', {weekday: 'short'})}</small>
+                    <div class="fw-medium">${formatDate(record.date)}</div>
+                    <small class="text-muted">${dayName}</small>
                 </td>
                 <td>
                     <i class="fas fa-building me-1 text-muted"></i>
-                    ${record.branch?.name || 'Unknown'}
+                    ${record.branch?.name || 'Main Branch'}
                 </td>
                 <td>
                     ${record.check_in_time ? `
-                        <span class="text-success fw-medium">${Utils.formatTime(record.check_in_time)}</span>
+                        <span class="text-success fw-medium">
+                            <i class="fas fa-sign-in-alt me-1"></i>${formatTime(record.check_in_time)}
+                        </span>
                         ${record.is_late ? '<br><small class="text-warning"><i class="fas fa-clock me-1"></i>Late</small>' : ''}
                     ` : '<span class="text-muted">--</span>'}
                 </td>
                 <td>
                     ${record.check_out_time ? `
-                        <span class="text-danger fw-medium">${Utils.formatTime(record.check_out_time)}</span>
+                        <span class="text-danger fw-medium">
+                            <i class="fas fa-sign-out-alt me-1"></i>${formatTime(record.check_out_time)}
+                        </span>
+                    ` : (record.check_in_time ? '<span class="badge bg-warning text-dark">Pending</span>' : '<span class="text-muted">--</span>')}
+                </td>
+                <td>
+                    ${record.work_hours !== undefined && record.work_hours !== null ? `
+                        <span class="fw-medium">${formatHours(record.work_hours)}</span>
                     ` : '<span class="text-muted">--</span>'}
                 </td>
                 <td>
-                    ${record.work_hours ? `
-                        <span class="fw-medium">${this.formatHours(record.work_hours)}</span>
-                    ` : '<span class="text-muted">--</span>'}
-                </td>
-                <td>
-                    <span class="badge ${this.getStatusBadgeClass(record.status)}">${record.status}</span>
+                    ${renderStatusBadge(record.status)}
                 </td>
                 <td>
                     ${record.check_in_notes || record.check_out_notes ? `
-                        <i class="fas fa-sticky-note text-info" title="${record.check_in_notes || record.check_out_notes}"></i>
+                        <i class="fas fa-sticky-note text-info" 
+                           data-bs-toggle="tooltip" 
+                           title="${escapeHtml(record.check_in_notes || record.check_out_notes)}"></i>
                     ` : '<span class="text-muted">--</span>'}
                 </td>
                 <td>
-                    ${this.renderActions(record)}
+                    ${renderActions(record)}
                 </td>
             </tr>
-        `).join('');
-    },
-    
-    updatePagination() {
-        const paginationNav = document.getElementById('pagination-nav');
-        const pagination = document.getElementById('pagination');
-        
-        if (this.totalPages <= 1) {
-            paginationNav.style.display = 'none';
-            return;
-        }
-        
-        paginationNav.style.display = 'block';
-        
-        let paginationHtml = '';
-        
-        // Previous button
-        paginationHtml += `
-            <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="attendanceData.loadAttendanceRecords(${this.currentPage - 1})">Previous</a>
-            </li>
         `;
-        
-        // Page numbers
-        for (let i = 1; i <= this.totalPages; i++) {
-            if (i === this.currentPage || i === 1 || i === this.totalPages || (i >= this.currentPage - 2 && i <= this.currentPage + 2)) {
-                paginationHtml += `
-                    <li class="page-item ${i === this.currentPage ? 'active' : ''}">
-                        <a class="page-link" href="#" onclick="attendanceData.loadAttendanceRecords(${i})">${i}</a>
-                    </li>
-                `;
-            } else if (i === this.currentPage - 3 || i === this.currentPage + 3) {
-                paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
-            }
-        }
-        
-        // Next button
-        paginationHtml += `
-            <li class="page-item ${this.currentPage === this.totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="attendanceData.loadAttendanceRecords(${this.currentPage + 1})">Next</a>
-            </li>
-        `;
-        
-        pagination.innerHTML = paginationHtml;
-    },
+    }).join('');
     
-    applyFilters(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        this.filters = Object.fromEntries(formData.entries());
-        
-        // Remove empty values
-        Object.keys(this.filters).forEach(key => {
-            if (!this.filters[key]) delete this.filters[key];
-        });
-        
-        this.currentPage = 1;
-        this.loadAttendanceRecords();
-    },
-    
-    resetFilters() {
-        document.getElementById('filterForm').reset();
-        this.initializeDateFilters();
-        this.filters = {};
-        this.currentPage = 1;
-        this.loadAttendanceRecords();
-    },
-    
-    async viewDetails(recordId) {
-        try {
-            const response = await API.get(`/employee/attendance/${recordId}`);
-            const record = response.data;
-            
-            const modalContent = document.getElementById('attendance-detail-content');
-            modalContent.innerHTML = `
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>Basic Information</h6>
-                        <table class="table table-sm">
-                            <tr><th>Date:</th><td>${Utils.formatDate(record.date)}</td></tr>
-                            <tr><th>Branch:</th><td>${record.branch?.name || 'Unknown'}</td></tr>
-                            <tr><th>Status:</th><td><span class="badge ${this.getStatusBadgeClass(record.status)}">${record.status}</span></td></tr>
-                            <tr><th>Work Hours:</th><td>${record.work_hours ? this.formatHours(record.work_hours) : '--'}</td></tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Time Records</h6>
-                        <table class="table table-sm">
-                            <tr><th>Check In:</th><td>${record.check_in_time ? Utils.formatTime(record.check_in_time) : '--'}</td></tr>
-                            <tr><th>Check Out:</th><td>${record.check_out_time ? Utils.formatTime(record.check_out_time) : '--'}</td></tr>
-                            <tr><th>Late:</th><td>${record.is_late ? '<span class="text-warning">Yes</span>' : 'No'}</td></tr>
-                        </table>
-                    </div>
-                </div>
-                
-                ${record.check_in_notes || record.check_out_notes ? `
-                    <div class="mt-3">
-                        <h6>Notes</h6>
-                        ${record.check_in_notes ? `<p><strong>Check In:</strong> ${record.check_in_notes}</p>` : ''}
-                        ${record.check_out_notes ? `<p><strong>Check Out:</strong> ${record.check_out_notes}</p>` : ''}
-                    </div>
-                ` : ''}
-                
-                ${record.check_in_selfie || record.check_out_selfie ? `
-                    <div class="mt-3">
-                        <h6>Photos</h6>
-                        <div class="row">
-                            ${record.check_in_selfie ? `
-                                <div class="col-md-6">
-                                    <p><strong>Check In Photo:</strong></p>
-                                    <img src="${record.check_in_selfie_url}" class="img-fluid rounded" style="max-height: 200px;">
-                                </div>
-                            ` : ''}
-                            ${record.check_out_selfie ? `
-                                <div class="col-md-6">
-                                    <p><strong>Check Out Photo:</strong></p>
-                                    <img src="${record.check_out_selfie_url}" class="img-fluid rounded" style="max-height: 200px;">
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                ` : ''}
-            `;
-            
-            const modal = new bootstrap.Modal(document.getElementById('attendanceDetailModal'));
-            modal.show();
-            
-        } catch (error) {
-            Utils.handleApiError(error, 'Failed to load attendance details');
-        }
-    },
-    
-    requestCorrection(recordId, date) {
-        document.getElementById('correctionForm').reset();
-        document.getElementById('correctionForm').setAttribute('data-record-id', recordId);
-        document.getElementById('correctionForm').setAttribute('data-date', date);
-        
-        const modal = new bootstrap.Modal(document.getElementById('correctionModal'));
-        modal.show();
-    },
-    
-    toggleTimeFields(type) {
-        const timeFields = document.getElementById('time-fields');
-        timeFields.style.display = ['missing_checkin', 'missing_checkout', 'wrong_time'].includes(type) ? 'block' : 'none';
-    },
-    
-    async submitCorrection(e) {
-        e.preventDefault();
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        Utils.setButtonLoading(submitBtn, true);
-        
-        try {
-            const formData = new FormData(e.target);
-            const recordId = e.target.getAttribute('data-record-id');
-            const date = e.target.getAttribute('data-date');
-            
-            const data = Object.fromEntries(formData.entries());
-            data.attendance_id = recordId;
-            data.date = date;
-            
-            const response = await API.post('/employee/corrections', data);
-            
-            Utils.showToast(response.message, 'success');
-            bootstrap.Modal.getInstance(document.getElementById('correctionModal')).hide();
-            
-        } catch (error) {
-            Utils.handleApiError(error);
-        } finally {
-            Utils.setButtonLoading(submitBtn, false);
-        }
-    },
-    
-    canRequestCorrection(record) {
-        // Can request correction for records from last 7 days
-        const recordDate = new Date(record.date);
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        return recordDate >= sevenDaysAgo;
-    },
-    
-    formatHours(hours) {
-        const h = Math.floor(hours);
-        const m = Math.round((hours - h) * 60);
-        return `${h}h ${m}m`;
-    },
-    
-    getStatusBadgeClass(status) {
-        const classes = {
-            'present': 'bg-success',
-            'late': 'bg-warning text-dark',
-            'absent': 'bg-danger',
-            'partial': 'bg-info'
-        };
-        return classes[status] || 'bg-secondary';
-    },
-
-    // New: Render actions including Complete Checkout when applicable
-    renderActions(record) {
-        const actions = [];
-        actions.push(`
-            <div class="btn-group btn-group-sm">
-                <button class="btn btn-outline-primary" onclick="attendanceData.viewDetails('${record.id}')" title="View Details">
-                    <i class="fas fa-eye"></i>
-                </button>
-                ${this.canRequestCorrection(record) ? `
-                    <button class="btn btn-outline-warning" onclick="attendanceData.requestCorrection('${record.id}', '${record.date}')" title="Request Correction">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                ` : ''}
-                ${this.shouldShowCompleteCheckout(record) ? `
-                    <button class="btn btn-outline-danger" title="Complete Checkout" onclick="showMissingCheckoutModal({ id: '${record.id}', date: '${record.date}', check_in_time: '${record.check_in_time || ''}' })">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </button>
-                ` : ''}
-            </div>
-        `);
-        return actions.join('');
-    },
-
-    shouldShowCompleteCheckout(record) {
-        if (!record.check_in_time || record.check_out_time) return false;
-        // Show for previous days only (not today)
-        const recDate = new Date(record.date + 'T00:00:00');
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        return recDate < today;
-    },
-
-    // New: Check missing checkouts and show banner
-    async checkMissingCheckouts() {
-        try {
-            const response = await API.get('/employee/attendance/missing-checkouts');
-            const list = (response && response.data && Array.isArray(response.data)) ? response.data : (response.data && response.data.data ? response.data.data : []);
-            if (list && list.length > 0) {
-                this.showMissingCheckoutBanner(list[0]);
-            }
-        } catch (e) {
-            // silent fail
-        }
-    },
-
-    showMissingCheckoutBanner(item) {
-        const container = document.querySelector('.container-fluid');
-        const banner = document.createElement('div');
-        banner.className = 'alert alert-warning d-flex align-items-center';
-        banner.innerHTML = `
-            <i class="fas fa-exclamation-triangle me-3"></i>
-            <div class="flex-grow-1">
-                <div class="fw-bold">Pending Checkout Detected</div>
-                <div class="small">You checked in on ${item.date} at ${item.check_in_time} but did not check out. Please complete it now.</div>
-            </div>
-            <button class="btn btn-sm btn-warning ms-3" onclick='showMissingCheckoutModal(${JSON.stringify({id: '${item.id}', date: item.date, check_in_time: item.check_in_time})})'>
-                <i class="fas fa-sign-out-alt me-1"></i> Complete Now
-            </button>
-        `;
-        container.insertBefore(banner, container.firstChild);
-    }
-};
-
-// Export function
-function exportAttendance() {
-    const params = new URLSearchParams(attendanceData.filters);
-    window.open(`/api/employee/reports/export/attendance?${params}`, '_blank');
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 }
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    attendanceData.init();
-});
+function updatePagination() {
+    const paginationNav = document.getElementById('pagination-nav');
+    const pagination = document.getElementById('pagination');
+    
+    if (totalPages <= 1) {
+        paginationNav.style.display = 'none';
+        return;
+    }
+    
+    paginationNav.style.display = 'block';
+    
+    let paginationHtml = '';
+    
+    // Previous button
+    paginationHtml += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">
+                <i class="fas fa-chevron-left"></i> Previous
+            </a>
+        </li>
+    `;
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            paginationHtml += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                </li>
+            `;
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+            paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+    }
+    
+    // Next button
+    paginationHtml += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">
+                Next <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+    `;
+    
+    pagination.innerHTML = paginationHtml;
+}
+
+function changePage(page) {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    loadAttendanceRecords(page);
+}
+
+function applyFilters() {
+    filters = {};
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
+    const status = document.getElementById('status-filter').value;
+    
+    if (startDate) filters.start_date = startDate;
+    if (endDate) filters.end_date = endDate;
+    if (status) filters.status = status;
+    
+    currentPage = 1;
+    loadAttendanceRecords();
+}
+
+function resetFilters() {
+    document.getElementById('filterForm').reset();
+    setDefaultDates();
+    currentPage = 1;
+    loadAttendanceRecords();
+}
+
+async function viewDetails(recordId) {
+    console.log('Viewing details for record:', recordId);
+    const modalContent = document.getElementById('attendance-detail-content');
+    modalContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+    
+    const modal = new bootstrap.Modal(document.getElementById('attendanceDetailModal'));
+    modal.show();
+    
+    try {
+        const response = await window.API.get(`/employee/attendance/${recordId}`);
+        const record = response.data || {};
+        
+        modalContent.innerHTML = `
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <h6 class="border-bottom pb-2"><i class="fas fa-info-circle me-2"></i>Basic Information</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="40%">Date:</th>
+                            <td>${formatDate(record.date)}</td>
+                        </tr>
+                        <tr>
+                            <th>Branch:</th>
+                            <td><i class="fas fa-building me-1"></i>${record.branch?.name || 'Main Branch'}</td>
+                        </tr>
+                        <tr>
+                            <th>Status:</th>
+                            <td>${renderStatusBadge(record.status)}</td>
+                        </tr>
+                        <tr>
+                            <th>Work Hours:</th>
+                            <td>${record.work_hours ? formatHours(record.work_hours) : '--'}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <h6 class="border-bottom pb-2"><i class="fas fa-clock me-2"></i>Time Records</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="40%">Check In:</th>
+                            <td>${record.check_in_time ? `<span class="text-success"><i class="fas fa-sign-in-alt me-1"></i>${formatTime(record.check_in_time)}</span>` : '--'}</td>
+                        </tr>
+                        <tr>
+                            <th>Check Out:</th>
+                            <td>${record.check_out_time ? `<span class="text-danger"><i class="fas fa-sign-out-alt me-1"></i>${formatTime(record.check_out_time)}</span>` : '--'}</td>
+                        </tr>
+                        <tr>
+                            <th>Late:</th>
+                            <td>${record.is_late ? '<span class="text-warning"><i class="fas fa-exclamation-circle me-1"></i>Yes</span>' : '<span class="text-success"><i class="fas fa-check-circle me-1"></i>No</span>'}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Failed to load details:', error);
+        modalContent.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Failed to load attendance details.</div>';
+    }
+}
+
+function requestCorrection(recordId, date) {
+    console.log('Request correction for:', recordId, date);
+    document.getElementById('correctionForm').reset();
+    document.getElementById('correctionForm').setAttribute('data-record-id', recordId);
+    document.getElementById('correctionForm').setAttribute('data-date', date);
+    
+    const modal = new bootstrap.Modal(document.getElementById('correctionModal'));
+    modal.show();
+}
+
+async function submitCorrection(e) {
+    e.preventDefault();
+    console.log('Submitting correction...');
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (window.Utils) {
+        window.Utils.setButtonLoading(submitBtn, true);
+    }
+    
+    try {
+        const formData = new FormData(e.target);
+        const recordId = e.target.getAttribute('data-record-id');
+        const date = e.target.getAttribute('data-date');
+        
+        const data = Object.fromEntries(formData.entries());
+        data.attendance_id = recordId;
+        data.date = date;
+        
+        const response = await window.API.post('/employee/corrections', data);
+        
+        if (window.Utils) {
+            window.Utils.showToast(response.message || 'Correction submitted successfully', 'success');
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('correctionModal')).hide();
+        
+    } catch (error) {
+        console.error('Failed to submit correction:', error);
+        if (window.Utils) {
+            window.Utils.showToast('Failed to submit correction', 'error');
+        }
+    } finally {
+        if (window.Utils) {
+            window.Utils.setButtonLoading(submitBtn, false);
+        }
+    }
+}
+
+async function checkMissingCheckouts() {
+    try {
+        const response = await window.API.get('/employee/attendance/missing-checkouts');
+        const missingCheckouts = response.data || [];
+        
+        if (missingCheckouts.length > 0) {
+            showMissingCheckoutBanner(missingCheckouts[0]);
+        }
+    } catch (error) {
+        console.debug('No missing checkouts');
+    }
+}
+
+function showMissingCheckoutBanner(item) {
+    const alertContainer = document.getElementById('missing-checkout-alert');
+    if (!alertContainer) return;
+    
+    alertContainer.innerHTML = `
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <div class="fw-bold">Pending Checkout Detected</div>
+                    <div>You checked in on ${formatDate(item.date)} at ${formatTime(item.check_in_time)} but did not check out.</div>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+}
+
+// Utility functions
+function formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
+function formatTime(timeString) {
+    if (!timeString) return '';
+    const parts = timeString.split(':');
+    if (parts.length >= 2) {
+        return `${parts[0]}:${parts[1]}`;
+    }
+    return timeString;
+}
+
+function formatHours(hours) {
+    if (hours === null || hours === undefined || hours === 0) return '0h 0m';
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    return `${h}h ${m > 0 ? m + 'm' : ''}`;
+}
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+function renderStatusBadge(status) {
+    const statusMap = {
+        'present': { text: 'Present', class: 'bg-success' },
+        'late': { text: 'Late', class: 'bg-warning text-dark' },
+        'absent': { text: 'Absent', class: 'bg-danger' },
+        'partial': { text: 'Partial', class: 'bg-info' },
+        'half_day': { text: 'Half Day', class: 'bg-info' }
+    };
+    
+    const config = statusMap[status?.toLowerCase()] || { text: status || 'Unknown', class: 'bg-secondary' };
+    return `<span class="badge ${config.class}">${config.text}</span>`;
+}
+
+function renderActions(record) {
+    const actions = [];
+    
+    // View details button
+    actions.push(`
+        <button class="btn btn-sm btn-outline-primary" 
+                onclick="viewDetails('${record.id}')" 
+                title="View Details" 
+                data-bs-toggle="tooltip">
+            <i class="fas fa-eye"></i>
+        </button>
+    `);
+    
+    // Request correction button (only for last 7 days)
+    const recordDate = new Date(record.date);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    if (recordDate >= sevenDaysAgo) {
+        actions.push(`
+            <button class="btn btn-sm btn-outline-warning" 
+                    onclick="requestCorrection('${record.id}', '${record.date}')" 
+                    title="Request Correction" 
+                    data-bs-toggle="tooltip">
+                <i class="fas fa-edit"></i>
+            </button>
+        `);
+    }
+    
+    return `<div class="btn-group btn-group-sm" role="group">${actions.join('')}</div>`;
+}
+
+function exportAttendance() {
+    const params = new URLSearchParams(filters);
+    const url = `${window.API.baseURL}/employee/reports/export/attendance?${params}`;
+    window.open(url, '_blank');
+}
+
+// Make functions globally available
+window.viewDetails = viewDetails;
+window.requestCorrection = requestCorrection;
+window.changePage = changePage;
+window.applyFilters = applyFilters;
+window.resetFilters = resetFilters;
+window.exportAttendance = exportAttendance;
+
 </script>
 @endpush

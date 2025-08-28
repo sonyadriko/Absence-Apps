@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\CorrectionsController;
 use App\Http\Controllers\Api\ManagementController;
 use App\Http\Controllers\Api\LeaveController;
+use App\Http\Controllers\HRCentral\AttendanceController as HRCentralAttendanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -143,6 +144,19 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('{id}/employees', [ManagementController::class, 'getBranchEmployees']);
             Route::put('{id}', [ManagementController::class, 'updateBranch']);
         });
+    });
+    
+    // HR Central routes
+    Route::prefix('hr-central')->group(function () {
+        // Attendance management
+        Route::prefix('attendance')->group(function () {
+            Route::get('daily-summary', [HRCentralAttendanceController::class, 'dailySummary']);
+            Route::get('stats', [HRCentralAttendanceController::class, 'getStats']);
+            Route::get('employees-by-branch', [HRCentralAttendanceController::class, 'getEmployeesByBranch']);
+        });
+        
+        // Employee details
+        Route::get('employees/{employee}/attendance', [HRCentralAttendanceController::class, 'getEmployeeAttendanceDetails']);
     });
     
     // Shared utility routes

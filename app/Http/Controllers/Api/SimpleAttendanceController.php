@@ -145,13 +145,23 @@ class SimpleAttendanceController extends ApiController
                     return $this->errorResponse('You have already checked in today', 400);
                 }
                 
+                // Determine if late (simple logic - after 9 AM)
+                $isLate = $eventTime->format('H:i:s') > '09:00:00';
+                $lateMinutes = 0;
+                
+                if ($isLate) {
+                    $scheduledStart = Carbon::parse($eventTime->format('Y-m-d') . ' 09:00:00');
+                    $lateMinutes = $scheduledStart->diffInMinutes($eventTime);
+                }
+                
                 // Create new attendance record for check-in
                 $attendanceData = [
                     'employee_id' => $employee->id,
                     'date' => $eventTime->format('Y-m-d'),
-                    'status' => 'present',
+                    'status' => $isLate ? 'late' : 'present',
                     'check_in' => $eventTime,
                     'actual_check_in' => $eventTime,
+                    'late_minutes' => $lateMinutes,
                     'notes' => $request->notes,
                     'location_data' => json_encode([
                         'check_in' => [
@@ -267,6 +277,11 @@ class SimpleAttendanceController extends ApiController
         if ($request->filled('end_date')) {
             $query->whereDate('date', '<=', $request->end_date);
         }
+        
+        // Apply status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
         // Default to current month if no filters
         if (!$request->filled('start_date') && !$request->filled('end_date')) {
@@ -318,14 +333,23 @@ class SimpleAttendanceController extends ApiController
         $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
 
-        $attendances = Attendance::where('employee_id', $user->employee->id)
-            ->whereBetween('date', [$startDate, $endDate])
-            ->get();
+        $query = Attendance::where('employee_id', $user->employee->id)
+            ->whereBetween('date', [$startDate, $endDate]);
+            
+        // Apply status filter if provided
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        $attendances = $query->get();
 
         $totalDays = Carbon::parse($startDate)->diffInWeekdays(Carbon::parse($endDate)) + 1;
-        $presentDays = $attendances->count();
-        $lateDays = 0; // Simplified
-        $totalHours = $attendances->sum('work_hours');
+        $presentDays = $attendances->whereIn('status', ['present', 'late'])->count();
+        $lateDays = $attendances->where('status', 'late')->count();
+        
+        // Calculate total hours from total_work_minutes
+        $totalMinutes = $attendances->sum('total_work_minutes');
+        $totalHours = round($totalMinutes / 60, 2);
 
         return $this->successResponse([
             'total_days' => $totalDays,
