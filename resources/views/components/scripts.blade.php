@@ -46,6 +46,20 @@ window.API = {
             const data = await response.json();
             
             if (!response.ok) {
+                // Log full error details for debugging
+                console.error('API Response Error:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    data: data
+                });
+                
+                // Handle validation errors specially
+                if (response.status === 422 && data.errors) {
+                    const error = new Error(data.message || 'Validation failed');
+                    error.validationErrors = data.errors;
+                    throw error;
+                }
+                
                 throw new Error(data.message || `HTTP ${response.status}`);
             }
             
@@ -54,7 +68,7 @@ window.API = {
             console.error('API Request failed:', error);
             
             // Handle authentication errors
-            if (error.message.includes('Unauthorized') || error.message.includes('Unauthenticated')) {
+            if (error.message && (error.message.includes('Unauthorized') || error.message.includes('Unauthenticated'))) {
                 this.removeToken();
                 if (window.location.pathname !== '/login') {
                     window.location.href = '/login';
@@ -67,13 +81,17 @@ window.API = {
     
     // GET request
     get(endpoint, params = {}) {
-        const url = new URL(this.baseURL + endpoint, window.location.origin);
+        let finalEndpoint = endpoint;
+        const urlParams = new URLSearchParams();
         Object.keys(params).forEach(key => {
             if (params[key] !== null && params[key] !== undefined) {
-                url.searchParams.append(key, params[key]);
+                urlParams.append(key, params[key]);
             }
         });
-        return this.request(url.pathname + url.search);
+        if (urlParams.toString()) {
+            finalEndpoint += '?' + urlParams.toString();
+        }
+        return this.request(finalEndpoint);
     },
     
     // POST request
@@ -342,6 +360,11 @@ function adjustMainContent() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize API token from PHP session
+    @if(session('api_token'))
+        API.setToken('{{ session('api_token') }}');
+    @endif
+    
     // Adjust main content layout
     adjustMainContent();
     

@@ -339,6 +339,22 @@ class RBACService
     }
 
     /**
+     * Store user permissions in session for faster access
+     */
+    public function storeUserPermissionsInSession(User $user)
+    {
+        $permissions = $this->getUserPermissions($user);
+        $permissionNames = $permissions->keys()->toArray();
+        
+        session(['user.permissions' => $permissionNames]);
+        
+        $roles = $this->getUserActiveRoles($user);
+        $roleNames = $roles->pluck('role.name')->toArray();
+        
+        session(['user.roles' => $roleNames]);
+    }
+    
+    /**
      * Clear user-specific cache
      */
     public function clearUserCache(User $user)

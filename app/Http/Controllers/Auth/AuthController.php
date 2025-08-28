@@ -58,6 +58,14 @@ class AuthController extends Controller
             // Store user roles and permissions in session for quick access
             $this->storeUserPermissionsInSession($user);
             
+            // Create API token for frontend
+            $permissions = $this->rbacService->getUserPermissions($user);
+            $abilities = $permissions->keys()->toArray();
+            $token = $user->createToken('web-session', $abilities);
+            
+            // Store token in session for frontend use
+            session(['api_token' => $token->plainTextToken]);
+            
             // Redirect based on role
             return $this->redirectBasedOnRole($user);
         }
@@ -74,6 +82,13 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+        $user = Auth::user();
+        
+        // Revoke API tokens
+        if ($user) {
+            $user->tokens()->delete();
+        }
+        
         Auth::logout();
         
         $request->session()->invalidate();

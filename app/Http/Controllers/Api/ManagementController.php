@@ -14,7 +14,7 @@ class ManagementController extends ApiController
 {
     public function __construct()
     {
-        $this->middleware('auth:api');
+        $this->middleware('auth:sanctum');
     }
 
     /**
@@ -67,7 +67,9 @@ class ManagementController extends ApiController
      */
     public function getAccessibleBranches()
     {
-        $branches = $this->getAccessibleBranches();
+        // Get all active branches
+        // TODO: Implement proper branch access control based on user permissions
+        $branches = Branch::where('is_active', true)->get();
 
         $transformedBranches = $branches->map(function($branch) {
             return [
@@ -82,12 +84,7 @@ class ManagementController extends ApiController
                 'geofence_radius' => $branch->geofence_radius,
                 'is_active' => $branch->is_active,
                 'employee_count' => $branch->employees()->count(),
-                'manager_name' => $branch->employees()
-                    ->whereHas('userRoles.role', function($q) {
-                        $q->where('name', 'branch_manager');
-                    })
-                    ->with('user')
-                    ->first()?->user?->name,
+                'manager_name' => null, // TODO: Implement manager lookup when role system is ready
             ];
         });
 

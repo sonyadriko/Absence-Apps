@@ -66,7 +66,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Placeholder routes (will be implemented later)
     Route::get('/employee/profile', function() {
-        return view('employee.dashboard');
+        return view('employee.profile.index');
     })->name('employee.profile.index');
     
     Route::get('/hr-central/branches', function() {
@@ -98,19 +98,19 @@ Route::middleware(['auth'])->group(function () {
     })->name('branch-manager.schedules.index');
     
     Route::get('/employee/attendance/checkin', function() {
-        return view('employee.dashboard');
+        return view('employee.attendance.checkin');
     })->name('employee.attendance.checkin');
     
     Route::get('/employee/attendance', function() {
-        return view('employee.dashboard');
+        return view('employee.attendance.index');
     })->name('employee.attendance.index');
     
     Route::get('/employee/schedule', function() {
-        return view('employee.dashboard');
+        return view('employee.schedule.index');
     })->name('employee.schedule.index');
     
     Route::get('/leaves', function() {
-        return view('employee.dashboard');
+        return view('employee.leave.index');
     })->name('leaves.index');
     
     Route::get('/reports', function() {

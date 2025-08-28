@@ -21,7 +21,7 @@ class AttendanceController extends ApiController
     {
         $this->policyResolver = $policyResolver;
         $this->shiftResolver = $shiftResolver;
-        $this->middleware('auth:api');
+        $this->middleware('auth:sanctum');
     }
 
     /**
