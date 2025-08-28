@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\SimpleAttendanceController;
+use App\Http\Controllers\Api\AttendanceCorrectionController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\SimpleScheduleController;
 use App\Http\Controllers\Api\ReportController;
@@ -63,6 +64,10 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('checkin', [SimpleAttendanceController::class, 'processCheckInOut']);
             Route::get('history', [SimpleAttendanceController::class, 'getAttendanceHistory']);
             Route::get('stats', [SimpleAttendanceController::class, 'getAttendanceStats']);
+            Route::get('missing-checkouts', [AttendanceCorrectionController::class, 'getMissingCheckouts']);
+            Route::post('submit-missing-checkout', [AttendanceCorrectionController::class, 'submitMissingCheckout']);
+            Route::post('late-checkout', [AttendanceCorrectionController::class, 'submitLateCheckout']);
+            Route::get('correction-history', [AttendanceCorrectionController::class, 'getCorrectionHistory']);
             Route::get('{id}', [SimpleAttendanceController::class, 'getAttendanceDetail']);
         });
         

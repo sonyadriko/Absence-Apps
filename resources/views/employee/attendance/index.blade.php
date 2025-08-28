@@ -226,6 +226,9 @@
         </div>
     </div>
 </div>
+
+{{-- Missing Checkout Correction Modal --}}
+@include('attendance.missing-checkout-modal')
 @endsection
 
 @push('scripts')
@@ -241,6 +244,7 @@ let attendanceData = {
         this.loadAttendanceRecords();
         this.setupEventListeners();
         this.initializeDateFilters();
+        this.checkMissingCheckouts();
     },
     
     setupEventListeners() {
@@ -346,16 +350,7 @@ let attendanceData = {
                     ` : '<span class="text-muted">--</span>'}
                 </td>
                 <td>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="attendanceData.viewDetails('${record.id}')" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        ${this.canRequestCorrection(record) ? `
-                            <button class="btn btn-outline-warning" onclick="attendanceData.requestCorrection('${record.id}', '${record.date}')" title="Request Correction">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                        ` : ''}
-                    </div>
+                    ${this.renderActions(record)}
                 </td>
             </tr>
         `).join('');
@@ -552,6 +547,68 @@ let attendanceData = {
             'partial': 'bg-info'
         };
         return classes[status] || 'bg-secondary';
+    },
+
+    // New: Render actions including Complete Checkout when applicable
+    renderActions(record) {
+        const actions = [];
+        actions.push(`
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" onclick="attendanceData.viewDetails('${record.id}')" title="View Details">
+                    <i class="fas fa-eye"></i>
+                </button>
+                ${this.canRequestCorrection(record) ? `
+                    <button class="btn btn-outline-warning" onclick="attendanceData.requestCorrection('${record.id}', '${record.date}')" title="Request Correction">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                ` : ''}
+                ${this.shouldShowCompleteCheckout(record) ? `
+                    <button class="btn btn-outline-danger" title="Complete Checkout" onclick="showMissingCheckoutModal({ id: '${record.id}', date: '${record.date}', check_in_time: '${record.check_in_time || ''}' })">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                ` : ''}
+            </div>
+        `);
+        return actions.join('');
+    },
+
+    shouldShowCompleteCheckout(record) {
+        if (!record.check_in_time || record.check_out_time) return false;
+        // Show for previous days only (not today)
+        const recDate = new Date(record.date + 'T00:00:00');
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        return recDate < today;
+    },
+
+    // New: Check missing checkouts and show banner
+    async checkMissingCheckouts() {
+        try {
+            const response = await API.get('/employee/attendance/missing-checkouts');
+            const list = (response && response.data && Array.isArray(response.data)) ? response.data : (response.data && response.data.data ? response.data.data : []);
+            if (list && list.length > 0) {
+                this.showMissingCheckoutBanner(list[0]);
+            }
+        } catch (e) {
+            // silent fail
+        }
+    },
+
+    showMissingCheckoutBanner(item) {
+        const container = document.querySelector('.container-fluid');
+        const banner = document.createElement('div');
+        banner.className = 'alert alert-warning d-flex align-items-center';
+        banner.innerHTML = `
+            <i class="fas fa-exclamation-triangle me-3"></i>
+            <div class="flex-grow-1">
+                <div class="fw-bold">Pending Checkout Detected</div>
+                <div class="small">You checked in on ${item.date} at ${item.check_in_time} but did not check out. Please complete it now.</div>
+            </div>
+            <button class="btn btn-sm btn-warning ms-3" onclick='showMissingCheckoutModal(${JSON.stringify({id: '${item.id}', date: item.date, check_in_time: item.check_in_time})})'>
+                <i class="fas fa-sign-out-alt me-1"></i> Complete Now
+            </button>
+        `;
+        container.insertBefore(banner, container.firstChild);
     }
 };
 

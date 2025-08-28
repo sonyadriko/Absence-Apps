@@ -7,7 +7,11 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use App\Models\AttendanceEvent;
 use App\Models\Attendance;
+use App\Models\EmployeeSchedule;
+use App\Models\WorkShift;
+use App\Helpers\AttendanceHelper;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class SimpleAttendanceController extends ApiController
 {
@@ -24,64 +28,69 @@ class SimpleAttendanceController extends ApiController
         $employee = $user->employee;
         $today = Carbon::now()->format('Y-m-d');
         
-        // Get today's attendance events if table exists
-        $todayEvents = [];
-        $latestEvent = null;
+        // Get today's attendance record
+        $todayAttendance = Attendance::where('employee_id', $employee->id)
+            ->where('date', $today)
+            ->first();
         
-        // Try to get from attendance_events table, fallback to simple status
-        try {
-            if (class_exists(AttendanceEvent::class)) {
-                $todayEvents = AttendanceEvent::where('employee_id', $employee->id)
-                    ->whereDate('event_time', $today)
-                    ->orderBy('event_time', 'desc')
-                    ->get();
-                    
-                $latestEvent = $todayEvents->first();
-            }
-        } catch (\Exception $e) {
-            // Table might not exist, continue with basic response
-        }
-
-        // Determine current status
+        // Check for pending checkout from yesterday
+        $yesterdayPending = Attendance::where('employee_id', $employee->id)
+            ->where('date', Carbon::yesterday()->format('Y-m-d'))
+            ->whereNotNull('check_in')
+            ->whereNull('check_out')
+            ->first();
+        
+        // Determine current status based on attendance
         $status = 'not_started';
-        if ($latestEvent) {
-            $status = match($latestEvent->event_type) {
-                'check_in' => 'checked_in',
-                'check_out' => 'checked_out',
-                'break_start' => 'on_break',
-                'break_end' => 'back_from_break',
-                default => 'unknown'
-            };
-        }
-
-        // Get branch info for GPS validation
-        $branch = $employee->branch ?? $employee->primaryBranch ?? null;
+        $checkInTime = null;
+        $checkOutTime = null;
+        $workHours = 0;
+        $pendingCheckout = null;
         
-        if (!$branch) {
-            // Get first available branch
-            $branch = \App\Models\Branch::first();
+        if ($todayAttendance) {
+            if ($todayAttendance->check_out) {
+                $status = 'checked_out';
+                $checkInTime = Carbon::parse($todayAttendance->check_in)->format('H:i:s');
+                $checkOutTime = Carbon::parse($todayAttendance->check_out)->format('H:i:s');
+                $workHours = round($todayAttendance->total_work_minutes / 60, 2);
+            } elseif ($todayAttendance->check_in) {
+                $status = 'checked_in';
+                $checkInTime = Carbon::parse($todayAttendance->check_in)->format('H:i:s');
+                // Calculate ongoing work hours
+                $checkIn = Carbon::parse($todayAttendance->check_in);
+                $workMinutes = $checkIn->diffInMinutes(Carbon::now());
+                $workHours = round($workMinutes / 60, 2);
+            }
+        }
+        
+        // Get branch info for GPS validation
+        $branch = $employee->branch ?? \App\Models\Branch::first();
+        
+        // Get monthly attendance count
+        $monthlyCount = Attendance::where('employee_id', $employee->id)
+            ->whereMonth('date', Carbon::now()->month)
+            ->whereYear('date', Carbon::now()->year)
+            ->count();
+
+        // Prepare pending checkout info if exists
+        if ($yesterdayPending) {
+            $pendingCheckout = [
+                'date' => $yesterdayPending->date,
+                'check_in_time' => Carbon::parse($yesterdayPending->check_in)->format('H:i:s'),
+                'work_hours_so_far' => round(Carbon::parse($yesterdayPending->check_in)->diffInMinutes(Carbon::now()) / 60, 2),
+                'message' => 'You have a pending checkout from yesterday. Please check out to complete the attendance.'
+            ];
         }
 
         return $this->successResponse([
             'current_status' => $status,
-            'latest_event' => $latestEvent ? [
-                'id' => $latestEvent->id,
-                'event_type' => $latestEvent->event_type,
-                'event_time' => $latestEvent->event_time->toISOString(),
-                'is_late' => $latestEvent->is_late ?? false,
-                'is_early_departure' => $latestEvent->is_early_departure ?? false,
-            ] : null,
-            'today_events' => collect($todayEvents)->map(function($event) {
-                return [
-                    'id' => $event->id,
-                    'event_type' => $event->event_type,
-                    'event_time' => $event->event_time->toISOString(),
-                    'is_late' => $event->is_late ?? false,
-                    'is_early_departure' => $event->is_early_departure ?? false,
-                    'notes' => $event->notes ?? '',
-                ];
-            }),
-            'current_schedule' => null, // Simplified for now
+            'check_in_time' => $checkInTime,
+            'check_out_time' => $checkOutTime,
+            'work_hours' => $workHours,
+            'checked_in' => $status === 'checked_in',
+            'checked_out' => $status === 'checked_out',
+            'monthly_count' => $monthlyCount,
+            'pending_checkout' => $pendingCheckout,
             'branch' => $branch ? [
                 'id' => $branch->id,
                 'name' => $branch->name,
@@ -167,12 +176,27 @@ class SimpleAttendanceController extends ApiController
                 }
             } else {
                 // Check-out logic
+                
+                // First check if there's an ongoing attendance for today
                 if (!$attendance || !$attendance->check_in) {
-                    return $this->errorResponse('You must check in first before checking out', 400);
+                    // Check if there's an uncompleted attendance from yesterday (overtime scenario)
+                    $yesterday = Carbon::yesterday();
+                    $yesterdayAttendance = Attendance::where('employee_id', $employee->id)
+                        ->where('date', $yesterday->format('Y-m-d'))
+                        ->whereNotNull('check_in')
+                        ->whereNull('check_out')
+                        ->first();
+                    
+                    if ($yesterdayAttendance) {
+                        // This is a late checkout for yesterday's attendance
+                        $attendance = $yesterdayAttendance;
+                    } else {
+                        return $this->errorResponse('You must check in first before checking out', 400);
+                    }
                 }
                 
                 if ($attendance->check_out) {
-                    return $this->errorResponse('You have already checked out today', 400);
+                    return $this->errorResponse('You have already checked out', 400);
                 }
                 
                 // Calculate work minutes

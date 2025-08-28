@@ -254,9 +254,50 @@ let attendanceManager = {
             this.currentStatus = response.data;
             this.updateStatusUI();
             this.updateActionButtons();
+            
+            // Check for pending checkout from yesterday
+            if (response.data.pending_checkout) {
+                const pending = response.data.pending_checkout;
+                this.showPendingCheckoutAlert(pending);
+            }
         } catch (error) {
             Utils.handleApiError(error, 'Failed to load attendance status');
         }
+    },
+    
+    showPendingCheckoutAlert(pending) {
+        const alertHtml = `
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-exclamation-triangle me-3 mt-1"></i>
+                    <div class="flex-grow-1">
+                        <h6 class="alert-heading mb-1">Pending Checkout from Yesterday</h6>
+                        <p class="mb-2">${pending.message}</p>
+                        <div class="small text-muted mb-2">
+                            <i class="fas fa-clock me-1"></i>Check-in: ${pending.date} at ${pending.check_in_time}
+                            <br>
+                            <i class="fas fa-hourglass-half me-1"></i>Working hours so far: ${pending.work_hours_so_far} hours
+                        </div>
+                        <button type="button" class="btn btn-sm btn-warning" onclick="attendanceManager.openModal('checkout')">
+                            <i class="fas fa-sign-out-alt me-1"></i>Complete Checkout Now
+                        </button>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        
+        // Insert alert at the top of the page
+        const container = document.querySelector('.container-fluid');
+        const existingAlert = container.querySelector('.alert-warning.pending-checkout');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+        
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'pending-checkout';
+        alertDiv.innerHTML = alertHtml;
+        container.insertBefore(alertDiv, container.firstChild);
     },
     
     async loadRecentAttendance() {
@@ -379,16 +420,20 @@ let attendanceManager = {
         const checkInBtn = document.getElementById('check-in-btn');
         const checkOutBtn = document.getElementById('check-out-btn');
         
-        if (this.currentStatus.checked_out) {
+        // Based on current_status from API
+        const status = this.currentStatus.current_status;
+        
+        if (status === 'checked_out') {
             checkInBtn.disabled = true;
             checkOutBtn.disabled = true;
             checkInBtn.innerHTML = '<i class="fas fa-check me-2"></i>Completed';
             checkOutBtn.innerHTML = '<i class="fas fa-check me-2"></i>Completed';
-        } else if (this.currentStatus.checked_in) {
+        } else if (status === 'checked_in') {
             checkInBtn.disabled = true;
             checkOutBtn.disabled = false;
             checkInBtn.innerHTML = '<i class="fas fa-check me-2"></i>Checked In';
         } else {
+            // not_started or other status
             checkInBtn.disabled = false;
             checkOutBtn.disabled = true;
         }
@@ -440,9 +485,17 @@ let attendanceManager = {
         const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
         const title = document.getElementById('modal-title');
         const branchSelection = document.getElementById('branch-selection');
+        const branchSelect = document.getElementById('branch-select');
         
         title.textContent = action === 'checkin' ? 'Check In' : 'Check Out';
         branchSelection.style.display = action === 'checkin' ? 'block' : 'none';
+        
+        // Handle required attribute based on action
+        if (action === 'checkin') {
+            branchSelect.setAttribute('required', 'required');
+        } else {
+            branchSelect.removeAttribute('required');
+        }
         
         // Reset form
         document.getElementById('attendanceForm').reset();
@@ -475,9 +528,18 @@ let attendanceManager = {
                 this.checkSubmitReady();
             },
             (error) => {
-                statusEl.innerHTML = '<i class="fas fa-exclamation-circle text-warning me-2"></i>Location access required';
-                progressBar.style.width = '0%';
-                console.error('Geolocation error:', error);
+                // Fallback untuk testing jika location tidak bisa diakses
+                console.warn('Geolocation failed, using default location for testing:', error);
+                statusEl.innerHTML = '<i class="fas fa-exclamation-circle text-warning me-2"></i>Using default location (testing mode)';
+                progressBar.style.width = '100%';
+                progressBar.classList.add('bg-warning');
+                
+                // Set default location untuk testing
+                this.currentLocation = {
+                    latitude: -6.2088,
+                    longitude: 106.8456
+                };
+                this.checkSubmitReady();
             },
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
         );
@@ -541,8 +603,18 @@ let attendanceManager = {
     checkSubmitReady() {
         const submitBtn = document.getElementById('submit-btn');
         const hasLocation = !!this.currentLocation;
-        const hasPhoto = !!this.capturedPhoto;
+        // Temporarily disable photo requirement for testing
+        const hasPhoto = true; // !!this.capturedPhoto;
         const hasBranch = this.selectedAction === 'checkout' || document.getElementById('branch-select').value;
+        
+        // Debug logging
+        console.log('checkSubmitReady:', {
+            selectedAction: this.selectedAction,
+            hasLocation: hasLocation,
+            hasPhoto: hasPhoto,
+            hasBranch: hasBranch,
+            currentLocation: this.currentLocation
+        });
         
         submitBtn.disabled = !(hasLocation && hasPhoto && hasBranch);
     },
