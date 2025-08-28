@@ -41,7 +41,7 @@
             <div class="stats-card">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <div class="h4 mb-0 fw-bold" id="totalRoles">8</div>
+                        <div class="h4 mb-0 fw-bold" id="totalRoles">{{ $stats['total_roles'] }}</div>
                         <div class="text-muted small">Total Roles</div>
                     </div>
                     <div class="fs-2 text-primary">
@@ -54,7 +54,7 @@
             <div class="stats-card">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <div class="h4 mb-0 fw-bold text-success" id="systemRoles">5</div>
+                        <div class="h4 mb-0 fw-bold text-success" id="systemRoles">{{ $stats['system_roles'] }}</div>
                         <div class="text-muted small">System Roles</div>
                     </div>
                     <div class="fs-2 text-success">
@@ -67,7 +67,7 @@
             <div class="stats-card">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <div class="h4 mb-0 fw-bold text-info" id="customRoles">3</div>
+                        <div class="h4 mb-0 fw-bold text-info" id="customRoles">{{ $stats['custom_roles'] }}</div>
                         <div class="text-muted small">Custom Roles</div>
                     </div>
                     <div class="fs-2 text-info">
@@ -80,7 +80,7 @@
             <div class="stats-card">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <div class="h4 mb-0 fw-bold text-warning" id="totalPermissions">49</div>
+                        <div class="h4 mb-0 fw-bold text-warning" id="totalPermissions">{{ $stats['total_permissions'] }}</div>
                         <div class="text-muted small">Permissions</div>
                     </div>
                     <div class="fs-2 text-warning">
@@ -113,7 +113,61 @@
                         </tr>
                     </thead>
                     <tbody id="rolesTableBody">
-                        <!-- Roles will be loaded via AJAX -->
+                        @foreach($roles as $role)
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="role-color me-2" style="width: 12px; height: 12px; border-radius: 50%; background-color: {{ $role->color }}"></div>
+                                    <div>
+                                        <div class="fw-bold">{{ $role->display_name }}</div>
+                                        <div class="small text-muted">{{ $role->name }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">Level {{ $role->hierarchy_level }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ $role->permissions_count ?? 0 }} permissions</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">{{ $role->users_count ?? 0 }} users</span>
+                            </td>
+                            <td>
+                                @if($role->is_system_role)
+                                    <span class="badge bg-success">System</span>
+                                @else
+                                    <span class="badge bg-warning">Custom</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($role->is_active)
+                                    <span class="badge bg-success">Active</span>
+                                @else
+                                    <span class="badge bg-danger">Inactive</span>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" onclick="viewRole({{ $role->id }})" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    @if(!$role->is_system_role)
+                                        <button class="btn btn-outline-warning" onclick="editRole({{ $role->id }})" title="Edit Role">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger" onclick="deleteRole({{ $role->id }}, '{{ $role->display_name }}')" title="Delete Role">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    @else
+                                        <button class="btn btn-outline-secondary" disabled title="System roles cannot be modified">
+                                            <i class="fas fa-lock"></i>
+                                        </button>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
                     </tbody>
                 </table>
             </div>
@@ -232,7 +286,7 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    loadRoles();
+    // Load permissions for create modal
     loadPermissions();
     
     // Initialize DataTable
@@ -395,8 +449,7 @@ $('#createRoleForm').on('submit', function(e) {
         .done(function(response) {
             $('#createRoleModal').modal('hide');
             showAlert('success', response.message);
-            loadRoles();
-            $('#createRoleForm')[0].reset();
+            setTimeout(() => window.location.reload(), 1500);
         })
         .fail(function(xhr) {
             const errors = xhr.responseJSON?.errors || {};
@@ -423,8 +476,7 @@ $('#templateForm').on('submit', function(e) {
         .done(function(response) {
             $('#templateModal').modal('hide');
             showAlert('success', response.message);
-            loadRoles();
-            $('#templateForm')[0].reset();
+            setTimeout(() => window.location.reload(), 1500);
         })
         .fail(function(xhr) {
             const error = xhr.responseJSON?.message || 'Failed to create role from template';
@@ -444,7 +496,7 @@ function deleteRole(roleId, roleName) {
         })
         .done(function(response) {
             showAlert('success', response.message);
-            loadRoles();
+            setTimeout(() => window.location.reload(), 1500);
         })
         .fail(function(xhr) {
             const error = xhr.responseJSON?.message || 'Failed to delete role';
@@ -460,8 +512,7 @@ function exportRoles() {
 
 // Refresh roles
 function refreshRoles() {
-    loadRoles();
-    showAlert('info', 'Roles refreshed');
+    window.location.reload();
 }
 
 // Show alert
@@ -492,6 +543,17 @@ function showAlert(type, message) {
     setTimeout(() => {
         alert.fadeOut();
     }, 5000);
+}
+
+// View role details
+function viewRole(roleId) {
+    window.location.href = `/admin/roles/${roleId}`;
+}
+
+// Edit role
+function editRole(roleId) {
+    // For now, just show an alert. We can implement edit modal later
+    showAlert('info', 'Edit functionality will be implemented in the next version. For now, you can delete and recreate the role.');
 }
 
 // Auto-generate display name from role name

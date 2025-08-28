@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use App\Models\Role;
 use App\Models\Permission;
+use App\Models\User;
 use App\Services\RBACService;
 
 class RoleManagementController extends Controller
@@ -22,9 +24,39 @@ class RoleManagementController extends Controller
     }
 
     /**
-     * Display roles management page
+     * Display roles management page (WEB)
      */
     public function index()
+    {
+        // Check if this is an API request
+        if (request()->is('api/*') || request()->expectsJson()) {
+            return $this->indexApi();
+        }
+        
+        // Web interface
+        $roles = Role::withCount(['users', 'permissions'])
+                    ->orderBy('hierarchy_level', 'desc')
+                    ->get();
+        
+        $permissions = Permission::select('group', DB::raw('count(*) as count'))
+                                ->groupBy('group')
+                                ->get();
+
+        $stats = [
+            'total_roles' => Role::count(),
+            'system_roles' => Role::where('is_system_role', true)->count(),
+            'custom_roles' => Role::where('is_system_role', false)->count(),
+            'total_permissions' => Permission::count(),
+            'users_with_roles' => User::whereHas('userRoles')->count()
+        ];
+
+        return view('admin.roles.index', compact('roles', 'permissions', 'stats'));
+    }
+    
+    /**
+     * API version of index
+     */
+    public function indexApi()
     {
         $roles = Role::with('permissions')
                     ->withCount('userRoles')
@@ -39,6 +71,17 @@ class RoleManagementController extends Controller
             'permissions' => $permissions,
             'permission_groups' => $permissionGroups
         ]);
+    }
+
+    /**
+     * Show role details
+     */
+    public function show(Role $role)
+    {
+        $role->load(['permissions', 'userRoles.user.employee']);
+        $allPermissions = Permission::orderBy('group')->orderBy('name')->get()->groupBy('group');
+        
+        return view('admin.roles.show', compact('role', 'allPermissions'));
     }
 
     /**

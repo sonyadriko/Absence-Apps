@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\CorrectionsController;
 use App\Http\Controllers\Api\ManagementController;
 use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\HRCentral\AttendanceController as HRCentralAttendanceController;
+use App\Http\Controllers\Admin\RoleManagementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -157,6 +158,28 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // Employee details
         Route::get('employees/{employee}/attendance', [HRCentralAttendanceController::class, 'getEmployeeAttendanceDetails']);
+    });
+    
+    // Admin Role Management routes (HR Central & System Admin only)
+    Route::prefix('admin')->group(function () {
+        // Role Management
+        Route::prefix('roles')->group(function () {
+            Route::get('/', [RoleManagementController::class, 'index']);
+            Route::post('/', [RoleManagementController::class, 'store']);
+            Route::get('{role}', [RoleManagementController::class, 'show']);
+            Route::put('{role}', [RoleManagementController::class, 'update']);
+            Route::delete('{role}', [RoleManagementController::class, 'destroy']);
+            Route::post('template', [RoleManagementController::class, 'createFromTemplate']);
+            Route::get('export', [RoleManagementController::class, 'exportConfig']);
+        });
+        
+        // User Role Assignment
+        Route::prefix('user-roles')->group(function () {
+            Route::get('/', [RoleManagementController::class, 'manageUserRoles']);
+            Route::post('assign', [RoleManagementController::class, 'assignRole']);
+            Route::post('remove', [RoleManagementController::class, 'removeRole']);
+            Route::get('users/{user}/permissions', [RoleManagementController::class, 'getUserPermissions']);
+        });
     });
     
     // Shared utility routes
