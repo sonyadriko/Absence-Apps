@@ -18,6 +18,117 @@
             color: var(--primary-color) !important;
         }
 
+        /* Fix link-style buttons in navbar */
+        .navbar .btn-link,
+        .user-menu-trigger {
+            text-decoration: none !important;
+            color: inherit !important;
+        }
+
+        .navbar .btn-link:hover,
+        .user-menu-trigger:hover {
+            text-decoration: none !important;
+            color: inherit !important;
+        }
+
+        /* Navbar improvements */
+        .navbar {
+            padding: 0.5rem 1rem;
+            min-height: 60px;
+        }
+        
+        /* User avatar styling */
+        .navbar-avatar-container {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+        }
+        
+        .user-avatar {
+            width: 40px !important;
+            height: 40px !important;
+            display: block;
+            transition: all 0.2s ease;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+        }
+        
+        /* User menu button */
+        .user-menu-trigger {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 6px 12px !important;
+            border-radius: 8px !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        .user-menu-trigger:hover {
+            background: rgba(0,0,0,0.05) !important;
+        }
+        
+        .user-menu-trigger:focus {
+            box-shadow: none !important;
+            background: rgba(0,0,0,0.08) !important;
+        }
+        
+        /* User info styling */
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .user-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.2;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .user-role-badge {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            margin-top: 2px;
+        }
+        
+        .dropdown-arrow {
+            margin-left: 8px;
+            font-size: 0.75rem;
+            color: #6c757d;
+            transition: transform 0.2s ease;
+        }
+        
+        .user-menu-trigger[aria-expanded="true"] .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        /* Status dot animation */
+        .status-dot {
+            animation: pulse-status 2s infinite;
+        }
+
+        @keyframes pulse-status {
+            0% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(40, 167, 69, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+            }
+        }
+
         .sidebar {
             height: 100vh;
             width: 260px;
@@ -274,6 +385,21 @@
             }
         }
         
+        /* Responsive design */
+        @media (max-width: 992px) {
+            .user-info {
+                display: none !important;
+            }
+            
+            .dropdown-arrow {
+                display: none !important;
+            }
+            
+            .navbar-avatar-container {
+                margin-right: 0;
+            }
+        }
+        
         @media (max-width: 768px) {
             .sidebar {
                 position: fixed;
@@ -283,7 +409,7 @@
                 z-index: 1040;
                 transition: left 0.3s ease;
                 box-shadow: 5px 0 15px rgba(0,0,0,0.3);
-                padding-top: 56px;
+                padding-top: 60px;
             }
             
             .sidebar.show {
@@ -297,16 +423,31 @@
             }
             
             .navbar .container-fluid {
-                padding-left: 15px;
-                padding-right: 15px;
+                padding-left: 12px;
+                padding-right: 12px;
             }
             
             .navbar-brand {
-                font-size: 1.1rem;
+                font-size: 1rem;
             }
             
             .navbar-brand .fas {
                 display: none;
+            }
+            
+            .navbar-avatar-container {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .user-avatar {
+                width: 36px !important;
+                height: 36px !important;
+                font-size: 14px !important;
+            }
+            
+            .user-menu-trigger {
+                padding: 4px !important;
             }
         }
         
@@ -331,6 +472,25 @@
             
             .user-menu .dropdown-item {
                 padding: 8px 15px;
+            }
+            
+            .navbar-brand span {
+                font-size: 0.9rem;
+            }
+            
+            .navbar-avatar-container {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .user-avatar {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 12px !important;
+            }
+            
+            body {
+                padding-top: 60px;
             }
         }
     </style>
@@ -357,44 +517,85 @@
             <div class="d-flex align-items-center">
                 <!-- Notifications -->
                 <div class="dropdown me-3">
-                    <button class="btn btn-link position-relative" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-bell fs-5"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            3
-                            <span class="visually-hidden">unread notifications</span>
-                        </span>
+                    <button class="btn position-relative" type="button" data-bs-toggle="dropdown" aria-label="Notifications" 
+                            style="background: transparent; border: none; padding: 8px; border-radius: 6px;">
+                        <i class="fas fa-bell text-muted" style="font-size: 1.1rem;"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                              style="font-size: 0.6rem; padding: 2px 6px;">3</span>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><h6 class="dropdown-header">Notifications</h6></li>
-                        <li><a class="dropdown-item" href="#">New leave request</a></li>
-                        <li><a class="dropdown-item" href="#">Attendance correction</a></li>
-                        <li><a class="dropdown-item" href="#">System update</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" style="border: none; border-radius: 8px; min-width: 280px;">
+                        <li><h6 class="dropdown-header fw-bold">Notifications</h6></li>
+                        <li><a class="dropdown-item py-2" href="#">
+                            <i class="fas fa-user-plus text-primary me-2"></i>New leave request
+                        </a></li>
+                        <li><a class="dropdown-item py-2" href="#">
+                            <i class="fas fa-clock text-warning me-2"></i>Attendance correction
+                        </a></li>
+                        <li><a class="dropdown-item py-2" href="#">
+                            <i class="fas fa-system text-info me-2"></i>System update
+                        </a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-center" href="#">View All</a></li>
+                        <li><a class="dropdown-item text-center text-primary py-2" href="#">
+                            <small>View All Notifications</small>
+                        </a></li>
                     </ul>
                 </div>
                 
                 <!-- User Menu -->
                 <div class="dropdown">
-                    <button class="btn btn-link dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown">
-                        <img src="https://via.placeholder.com/32x32/8B4513/FFFFFF?text={{ substr(auth()->user()->name, 0, 1) }}" 
-                             class="rounded-circle me-2" alt="User Avatar">
-                        <div class="text-start d-none d-sm-block">
-                            <div class="small fw-bold text-dark">{{ auth()->user()->name }}</div>
-                            <div class="small text-muted">
-                                @if(auth()->user()->employee)
-                                    @php
-                                        $userRoles = app(App\Services\RBACService::class)->getUserActiveRoles(auth()->user());
-                                        $primaryRole = $userRoles->first();
-                                    @endphp
-                                    @if($primaryRole)
-                                        <span class="badge role-badge" style="background-color: {{ $primaryRole->role->color }}">
-                                            {{ $primaryRole->role->display_name }}
-                                        </span>
-                                    @endif
-                                @endif
-                            </div>
+                    <button class="user-menu-trigger d-flex align-items-center" 
+                            type="button" 
+                            data-bs-toggle="dropdown" 
+                            aria-expanded="false"
+                            aria-label="User menu">
+                        @php
+                            $user = auth()->user();
+                            $userRoles = app(App\Services\RBACService::class)->getUserActiveRoles($user);
+                            $primaryRole = $userRoles->first();
+                            $roleName = $primaryRole->role->name ?? 'employee';
+                            
+                            // Use Avatar Service
+                            $avatarService = app(App\Services\AvatarService::class);
+                            $colors = $avatarService->getRoleColors($roleName);
+                            $roleIcon = $avatarService->getRoleIcon($roleName);
+                            $initials = $avatarService->getInitials($user->name);
+                        @endphp
+                        
+                        <!-- Avatar -->
+                        <div class="position-relative navbar-avatar-container">
+                            @if($user->profile_photo && file_exists(storage_path('app/public/' . $user->profile_photo)))
+                                <!-- Profile Photo -->
+                                <img src="{{ asset('storage/' . $user->profile_photo) }}" 
+                                     class="rounded-circle user-avatar" 
+                                     alt="{{ $user->name }}" 
+                                     style="object-fit: cover;">
+                            @else
+                                <!-- Initials Avatar -->
+                                <div class="user-avatar rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="background: {{ $colors['bg'] }}; color: {{ $colors['text'] }}; font-size: 16px; font-weight: 700;">
+                                    {{ $initials }}
+                                </div>
+                            @endif
+                            
+                            <!-- Online Status -->
+                            <span class="position-absolute bottom-0 end-0 bg-success rounded-circle" 
+                                  style="width: 10px; height: 10px; border: 2px solid white;"
+                                  title="Online"></span>
                         </div>
+                        
+                        <!-- User Info (Hidden on mobile) -->
+                        <div class="user-info ms-3 d-none d-md-block">
+                            <div class="user-name">{{ $user->name }}</div>
+                            @if($primaryRole)
+                                <div class="user-role-badge" style="background: {{ $colors['bg'] }}; color: {{ $colors['text'] }};">
+                                    <i class="{{ $roleIcon }} me-1" style="font-size: 0.65rem;"></i>
+                                    <span>{{ $primaryRole->role->display_name }}</span>
+                                </div>
+                            @endif
+                        </div>
+                        
+                        <!-- Dropdown Arrow -->
+                        <i class="fas fa-chevron-down dropdown-arrow d-none d-md-inline"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end user-menu">
                         <li><a class="dropdown-item" href="{{ route('employee.profile.index') }}">
