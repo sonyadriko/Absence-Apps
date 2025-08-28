@@ -96,8 +96,14 @@
         }
         
         .main-content.sidebar-collapsed {
-            margin-left: 70px;
-            width: calc(100% - 70px);
+            margin-left: 70px !important;
+            width: calc(100% - 70px) !important;
+        }
+        
+        /* Ensure smooth animation */
+        .main-content.sidebar-collapsed .container-fluid {
+            max-width: none;
+            transition: all 0.3s ease;
         }
 
         .sidebar .nav-link {
@@ -139,6 +145,7 @@
             min-height: calc(100vh - 56px);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             width: calc(100% - 260px);
+            background: #f8f9fa;
         }
 
         .card {
@@ -549,6 +556,10 @@
                     // Desktop: collapse/expand sidebar
                     sidebar.classList.toggle('collapsed');
                     mainContent.classList.toggle('sidebar-collapsed');
+                    
+                    // Debug: log state
+                    console.log('Sidebar collapsed:', sidebar.classList.contains('collapsed'));
+                    console.log('Main content classes:', mainContent.className);
                     
                     // Save state to localStorage
                     const isCollapsed = sidebar.classList.contains('collapsed');
