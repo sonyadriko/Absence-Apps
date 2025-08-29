@@ -695,7 +695,7 @@
                     @endif
                     
                     <!-- Common menus for all roles -->
-                    @if($rbac->userHasPermission(auth()->user(), 'leave.create.own') || $rbac->userHasPermission(auth()->user(), 'leave.view.branch'))
+                    @if($rbac->userHasPermission(auth()->user(), 'leave.create.own') || $rbac->userHasPermission(auth()->user(), 'leave.view.branch') || $rbac->userHasPermission(auth()->user(), 'leave.view.all'))
                         <a href="{{ route('leaves.index') }}" class="nav-link {{ request()->routeIs('leaves.index') ? 'active' : '' }}">
                             <i class="fas fa-calendar-alt"></i><span>Leave Requests</span>
                         </a>

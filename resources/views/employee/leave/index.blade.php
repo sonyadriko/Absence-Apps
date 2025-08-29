@@ -1,3 +1,11 @@
+@php
+    $user = auth()->user();
+    $rbac = app(App\Services\RBACService::class);
+    $canViewAll = $rbac->userHasPermission($user, 'leave.view.all');
+    $canViewBranch = $rbac->userHasPermission($user, 'leave.view.branch');
+    $canApprove = $rbac->userHasPermission($user, 'leave.approve.own') || $rbac->userHasPermission($user, 'leave.approve.branch') || $rbac->userHasPermission($user, 'leave.approve.all');
+@endphp
+
 @extends('layouts.app')
 
 @section('title', 'Leave Management')
@@ -10,7 +18,15 @@
             <h1 class="h3 mb-0">
                 <i class="fas fa-calendar-times me-2"></i>Leave Management
             </h1>
-            <p class="text-muted mb-0">Manage your leave requests and view balances</p>
+            <p class="text-muted mb-0">
+                @if($canViewAll)
+                    Manage all employee leave requests across all branches
+                @elseif($canViewBranch)
+                    Manage leave requests for your branch employees
+                @else
+                    Manage your leave requests and view balances
+                @endif
+            </p>
         </div>
         
         <div class="btn-group">
@@ -135,6 +151,12 @@
                 <table class="table table-hover" id="leaveTable">
                     <thead>
                         <tr>
+                            @if($canViewBranch || $canViewAll)
+                                <th>Employee</th>
+                            @endif
+                            @if($canViewAll)
+                                <th>Branch</th>
+                            @endif
                             <th>Request Date</th>
                             <th>Leave Type</th>
                             <th>Start Date</th>
@@ -351,6 +373,13 @@
 
 @push('scripts')
 <script>
+// Pass PHP variables to JavaScript
+window.leavePermissions = {
+    canViewAll: @json($canViewAll),
+    canViewBranch: @json($canViewBranch),
+    canApprove: @json($canApprove)
+};
+
 const leavePage = {
     state: {
         filters: {},
@@ -438,14 +467,42 @@ const leavePage = {
 
     updateLeaveTable() {
         const tbody = document.getElementById('leaveTableBody');
+        const permissions = window.leavePermissions;
         
         if (!this.state.leaves || this.state.leaves.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">No leave requests found</td></tr>';
+            const colCount = this.getTableColumnCount();
+            tbody.innerHTML = `<tr><td colspan="${colCount}" class="text-center text-muted py-4">No leave requests found</td></tr>`;
             return;
         }
         
-        tbody.innerHTML = this.state.leaves.map(leave => `
-            <tr>
+        tbody.innerHTML = this.state.leaves.map(leave => {
+            let columns = '';
+            
+            // Employee column for managers
+            if (permissions.canViewBranch || permissions.canViewAll) {
+                columns += `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div>
+                                <div class="fw-medium">${leave.user?.name || 'N/A'}</div>
+                                <small class="text-muted">${leave.user?.employee_id || 'N/A'}</small>
+                            </div>
+                        </div>
+                    </td>
+                `;
+            }
+            
+            // Branch column for HR Central
+            if (permissions.canViewAll) {
+                columns += `
+                    <td>
+                        <span class="badge bg-info">${leave.user?.branch?.name || 'N/A'}</span>
+                    </td>
+                `;
+            }
+            
+            // Standard columns
+            columns += `
                 <td>
                     <div class="fw-medium">${Utils.formatDate(leave.created_at)}</div>
                     <small class="text-muted">${Utils.formatTime(leave.created_at)}</small>
@@ -477,22 +534,141 @@ const leavePage = {
                     ${this.renderProgress(leave)}
                 </td>
                 <td>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="leavePage.viewDetails('${leave.id}')" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        ${leave.status === 'pending' ? `
-                            <button class="btn btn-outline-warning" onclick="leavePage.editRequest('${leave.id}')" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-outline-danger" onclick="leavePage.cancelRequest('${leave.id}')" title="Cancel">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        ` : ''}
-                    </div>
+                    ${this.renderActionButtons(leave)}
                 </td>
-            </tr>
-        `).join('');
+            `;
+            
+            return `<tr>${columns}</tr>`;
+        }).join('');
+    },
+    
+    renderActionButtons(leave) {
+        const permissions = window.leavePermissions;
+        let buttons = `
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" onclick="leavePage.viewDetails('${leave.id}')" title="View Details">
+                    <i class="fas fa-eye"></i>
+                </button>
+        `;
+        
+        // Edit/Cancel buttons for own requests or if user can approve
+        if (leave.status === 'pending') {
+            // Own requests
+            if (!permissions.canViewBranch && !permissions.canViewAll) {
+                buttons += `
+                    <button class="btn btn-outline-warning" onclick="leavePage.editRequest('${leave.id}')" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="leavePage.cancelRequest('${leave.id}')" title="Cancel">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+            }
+            
+            // Approval buttons for managers
+            if (permissions.canApprove) {
+                buttons += `
+                    <button class="btn btn-outline-success" onclick="leavePage.approveRequest('${leave.id}')" title="Approve">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="leavePage.rejectRequest('${leave.id}')" title="Reject">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+            }
+        }
+        
+        buttons += `</div>`;
+        return buttons;
+    },
+    
+    getTableColumnCount() {
+        const permissions = window.leavePermissions;
+        let count = 8; // Base columns: Request Date, Leave Type, Start, End, Days, Status, Next Action, Progress, Actions
+        
+        if (permissions.canViewBranch || permissions.canViewAll) {
+            count += 1; // Employee column
+        }
+        if (permissions.canViewAll) {
+            count += 1; // Branch column
+        }
+        
+        return count;
+    },
+    
+    async approveRequest(leaveId) {
+        if (await Utils.confirm('Are you sure you want to approve this leave request?', 'Approve Leave Request')) {
+            try {
+                const response = await API.post(`/approvals/${leaveId}/approve`);
+                Utils.showToast(response.message || 'Leave request approved successfully', 'success');
+                this.loadLeaveRequests();
+            } catch (error) {
+                Utils.handleApiError(error, 'Failed to approve leave request');
+            }
+        }
+    },
+    
+    async rejectRequest(leaveId) {
+        const reason = await this.promptForRejectionReason();
+        if (reason) {
+            try {
+                const response = await API.post(`/approvals/${leaveId}/reject`, { reason });
+                Utils.showToast(response.message || 'Leave request rejected', 'success');
+                this.loadLeaveRequests();
+            } catch (error) {
+                Utils.handleApiError(error, 'Failed to reject leave request');
+            }
+        }
+    },
+    
+    async promptForRejectionReason() {
+        return new Promise((resolve) => {
+            const modalId = 'rejection-reason-modal-' + Date.now();
+            const modalHtml = `
+                <div class="modal fade" id="${modalId}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Rejection Reason</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <textarea class="form-control" id="rejection-reason-input" placeholder="Please provide a reason for rejection..." rows="3" required></textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" id="confirm-rejection">Reject Request</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            const modalElement = document.getElementById(modalId);
+            const modal = new bootstrap.Modal(modalElement);
+            const reasonInput = document.getElementById('rejection-reason-input');
+            
+            document.getElementById('confirm-rejection').addEventListener('click', () => {
+                const reason = reasonInput.value.trim();
+                if (reason) {
+                    modal.hide();
+                    resolve(reason);
+                } else {
+                    reasonInput.focus();
+                    Utils.showToast('Please provide a reason for rejection', 'warning');
+                }
+            });
+            
+            modalElement.addEventListener('hidden.bs.modal', () => {
+                modalElement.remove();
+                resolve(null);
+            });
+            
+            modal.show();
+            reasonInput.focus();
+        });
     },
 
     updatePagination() {

@@ -82,12 +82,12 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
         
         // Leave management routes
         Route::prefix('leave')->group(function () {
+            Route::get('balance', [LeaveController::class, 'getLeaveBalance']); // Specific routes first
             Route::get('/', [LeaveController::class, 'getLeaveRequests']);
             Route::post('/', [LeaveController::class, 'createLeaveRequest']);
-            Route::get('{id}', [LeaveController::class, 'getLeaveRequest']);
-            Route::put('{id}', [LeaveController::class, 'updateLeaveRequest']);
             Route::put('{id}/cancel', [LeaveController::class, 'cancelLeaveRequest']);
-            Route::get('balance', [LeaveController::class, 'getLeaveBalance']);
+            Route::get('{id}', [LeaveController::class, 'getLeaveRequest']); // Wildcard routes last
+            Route::put('{id}', [LeaveController::class, 'updateLeaveRequest']);
         });
         
         // Correction requests

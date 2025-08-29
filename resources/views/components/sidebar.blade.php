@@ -119,7 +119,7 @@
             @php
                 $commonItems = [];
                 
-                if($rbac->userHasPermission($user, 'leave.create.own') || $rbac->userHasPermission($user, 'leave.view.branch')) {
+                if($rbac->userHasPermission($user, 'leave.create.own') || $rbac->userHasPermission($user, 'leave.view.branch') || $rbac->userHasPermission($user, 'leave.view.all')) {
                     $commonItems[] = [
                         'route' => 'leaves.index',
                         'icon' => 'fas fa-calendar-alt',

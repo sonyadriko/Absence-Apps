@@ -7,6 +7,7 @@ use App\Http\Controllers\Employee\DashboardController;
 use App\Http\Controllers\HRCentral\BranchController;
 use App\Http\Controllers\HRCentral\EmployeeController;
 use App\Http\Controllers\HRCentral\AttendanceController as HRCentralAttendanceController;
+use App\Http\Controllers\HRCentral\DashboardController as HRCentralDashboardController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\ReportsController;
 
@@ -32,7 +33,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Role-based dashboards
     Route::get('/hr-central/dashboard', function() {
-        return view('employee.dashboard'); // Will create specific ones later
+        return view('hr-central.dashboard');
     })->name('hr-central.dashboard');
     
     Route::get('/branch-manager/dashboard', function() {
@@ -145,6 +146,15 @@ Route::prefix('api')->middleware(['auth'])->group(function () {
     Route::apiResource('hr-central/employees', EmployeeController::class);
     Route::post('hr-central/employees/{employee}/toggle-status', [EmployeeController::class, 'toggleStatus']);
     
+    // HR Central Dashboard APIs
+    Route::prefix('hr-central/dashboard')->group(function () {
+        Route::get('stats', [HRCentralDashboardController::class, 'getStats']);
+        Route::get('recent-leave-requests', [HRCentralDashboardController::class, 'getRecentLeaveRequests']);
+        Route::get('top-performers', [HRCentralDashboardController::class, 'getTopPerformers']);
+        Route::get('attendance-trends', [HRCentralDashboardController::class, 'getAttendanceTrends']);
+        Route::get('department-distribution', [HRCentralDashboardController::class, 'getDepartmentDistribution']);
+    });
+    
     // HR Central Attendance AJAX APIs
     Route::prefix('hr-central')->group(function () {
         Route::get('employees/{employee}/attendance', [HRCentralAttendanceController::class, 'getEmployeeAttendanceDetails']);
@@ -160,6 +170,7 @@ Route::prefix('api')->middleware(['auth'])->group(function () {
         Route::post('/{leave_request}/reject', [ApprovalController::class, 'reject']);
     });
     
+
     // Reports APIs
     Route::prefix('reports')->group(function () {
         Route::get('/dashboard-stats', [ReportsController::class, 'getDashboardStats']);
