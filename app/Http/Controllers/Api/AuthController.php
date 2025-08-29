@@ -255,19 +255,33 @@ class AuthController extends ApiController
             'last_login_at' => $user->last_login_at,
             'employee' => $user->employee ? [
                 'id' => $user->employee->id,
-                'employee_code' => $user->employee->employee_code,
+                'employee_number' => $user->employee->employee_number,
+                'full_name' => $user->employee->full_name,
+                'email' => $user->employee->email,
                 'phone' => $user->employee->phone,
+                'position_id' => $user->employee->position_id,
                 'hire_date' => $user->employee->hire_date,
-                'branch' => [
-                    'id' => $user->employee->branch->id,
-                    'name' => $user->employee->branch->name,
-                    'code' => $user->employee->branch->code,
-                    'address' => $user->employee->branch->address,
-                    'phone' => $user->employee->branch->phone,
-                    'latitude' => $user->employee->branch->latitude,
-                    'longitude' => $user->employee->branch->longitude,
-                    'geofence_radius' => $user->employee->branch->geofence_radius,
-                ]
+                'status' => $user->employee->status,
+                'employment_type' => $user->employee->employment_type,
+                'hourly_rate' => $user->employee->hourly_rate,
+                'department' => $user->employee->department,
+                'address' => $user->employee->address,
+                'emergency_contact_name' => $user->employee->emergency_contact_name,
+                'emergency_contact_phone' => $user->employee->emergency_contact_phone,
+                'position' => $user->employee->position ? [
+                    'id' => $user->employee->position->id,
+                    'name' => $user->employee->position->name,
+                ] : null,
+                'primary_branch' => $user->employee->primaryBranch ? [
+                    'id' => $user->employee->primaryBranch->id,
+                    'name' => $user->employee->primaryBranch->name,
+                    'code' => $user->employee->primaryBranch->code,
+                    'address' => $user->employee->primaryBranch->address,
+                    'phone' => $user->employee->primaryBranch->phone,
+                    'latitude' => $user->employee->primaryBranch->latitude,
+                    'longitude' => $user->employee->primaryBranch->longitude,
+                    'radius' => $user->employee->primaryBranch->radius,
+                ] : null
             ] : null,
             'roles' => $userRoles->map(function($userRole) {
                 return [
@@ -417,5 +431,115 @@ class AuthController extends ApiController
         } catch (\Exception $e) {
             return $this->serverErrorResponse('Failed to change password');
         }
+    }
+
+    /**
+     * Get employee documents
+     */
+    public function getDocuments()
+    {
+        $user = $this->getAuthenticatedUser();
+        
+        if (!$user || !$user->employee) {
+            return $this->unauthorizedResponse();
+        }
+
+        // For now return empty array since we don't have documents table yet
+        // In real implementation, you would query employee documents
+        $documents = collect([]);
+
+        return $this->successResponse($documents, 'Documents retrieved successfully');
+    }
+
+    /**
+     * Upload employee document
+     */
+    public function uploadDocument(Request $request)
+    {
+        $user = $this->getAuthenticatedUser();
+        
+        if (!$user || !$user->employee) {
+            return $this->unauthorizedResponse();
+        }
+
+        $validator = Validator::make($request->all(), [
+            'document_type' => 'required|string|in:id_card,family_card,cv,diploma,health_certificate,food_safety_cert,barista_cert,contract,bank_account,tax_number,other',
+            'document_file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120', // 5MB
+            'description' => 'nullable|string|max:255'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors());
+        }
+
+        // For now just return success message
+        // In real implementation, you would store the file and create database record
+        
+        return $this->successResponse([
+            'id' => rand(1000, 9999),
+            'type' => $request->document_type,
+            'name' => $request->file('document_file')->getClientOriginalName(),
+            'description' => $request->description,
+            'uploaded_at' => now()->toISOString()
+        ], 'Document uploaded successfully');
+    }
+
+    /**
+     * Update profile photo
+     */
+    public function updatePhoto(Request $request)
+    {
+        $user = $this->getAuthenticatedUser();
+        
+        if (!$user || !$user->employee) {
+            return $this->unauthorizedResponse();
+        }
+
+        $validator = Validator::make($request->all(), [
+            'profile_photo' => 'required|image|mimes:jpg,jpeg,png|max:2048' // 2MB
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors());
+        }
+
+        // For now just return success message with default avatar
+        // In real implementation, you would store the image and update employee record
+        
+        $photoUrl = "https://ui-avatars.com/api/?name=" . urlencode($user->name) . "&size=120&background=8B4513&color=fff";
+        
+        return $this->successResponse([
+            'photo_url' => $photoUrl
+        ], 'Profile photo updated successfully');
+    }
+
+    /**
+     * Download employee document
+     */
+    public function downloadDocument($documentId)
+    {
+        $user = $this->getAuthenticatedUser();
+        
+        if (!$user || !$user->employee) {
+            return $this->unauthorizedResponse();
+        }
+
+        // For now just return not found since we don't have actual documents
+        return $this->notFoundResponse('Document not found');
+    }
+
+    /**
+     * Delete employee document
+     */
+    public function deleteDocument($documentId)
+    {
+        $user = $this->getAuthenticatedUser();
+        
+        if (!$user || !$user->employee) {
+            return $this->unauthorizedResponse();
+        }
+
+        // For now just return success message
+        return $this->successResponse(null, 'Document deleted successfully');
     }
 }

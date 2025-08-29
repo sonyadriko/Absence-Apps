@@ -501,17 +501,20 @@
     <!-- Top Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top" style="z-index: 1050;">
         <div class="container-fluid">
-        <!-- Sidebar toggle (both mobile & desktop) -->
-            <button class="btn me-3" type="button" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-            
-            <!-- Brand -->
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-coffee me-2"></i>
-                <span class="d-none d-sm-inline">{{ config('app.name', 'Coffee Shop Attendance') }}</span>
-                <span class="d-sm-none">CoffeeShop</span>
-            </a>
+            <!-- Left side - Toggle and Brand -->
+            <div class="d-flex align-items-center">
+                <!-- Sidebar toggle (both mobile & desktop) -->
+                <button class="btn me-3" type="button" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <!-- Brand -->
+                <a class="navbar-brand mb-0" href="#">
+                    <i class="fas fa-coffee me-2"></i>
+                    <span class="d-none d-sm-inline">{{ config('app.name', 'Coffee Shop Attendance') }}</span>
+                    <span class="d-sm-none">Coffee</span>
+                </a>
+            </div>
             
             <!-- Right side menu -->
             <div class="d-flex align-items-center">

@@ -26,52 +26,47 @@
     <!-- Profile Overview -->
     <div class="row mb-4">
         <div class="col-lg-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <div class="position-relative d-inline-block mb-3">
-                        <img id="profile-photo" src="" alt="Profile Photo" 
-                             class="rounded-circle" width="120" height="120" 
-                             style="object-fit: cover; border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                        <button class="btn btn-primary btn-sm rounded-circle position-absolute" 
-                                style="bottom: 0; right: 0; width: 36px; height: 36px;" 
-                                id="upload-photo-btn">
-                            <i class="fas fa-camera"></i>
-                        </button>
+            <div class="stats-card text-center" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); color: white; border-left: none;">
+                <div class="position-relative d-inline-block mb-3">
+                    <img id="profile-photo" src="" alt="Profile Photo" 
+                         class="rounded-circle" width="120" height="120" 
+                         style="object-fit: cover; border: 4px solid rgba(255,255,255,0.3); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    <button class="btn btn-light btn-sm rounded-circle position-absolute" 
+                            style="bottom: 0; right: 0; width: 36px; height: 36px; color: var(--primary-color);" 
+                            id="upload-photo-btn">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                <h5 class="mb-1 text-white" id="profile-name">Loading...</h5>
+                <p class="text-white-50" id="profile-role">Role</p>
+                <div class="row text-center mt-4">
+                    <div class="col-4">
+                        <div class="h5 mb-0 text-white" id="profile-experience">0</div>
+                        <small class="text-white-50">Years</small>
                     </div>
-                    <h5 class="mb-1" id="profile-name">Loading...</h5>
-                    <p class="text-muted" id="profile-role">Role</p>
-                    <div class="row text-center mt-3">
-                        <div class="col-4">
-                            <div class="h6 mb-0" id="profile-experience">0</div>
-                            <small class="text-muted">Years</small>
-                        </div>
-                        <div class="col-4">
-                            <div class="h6 mb-0" id="profile-branch">-</div>
-                            <small class="text-muted">Branch</small>
-                        </div>
-                        <div class="col-4">
-                            <div class="h6 mb-0" id="profile-status">-</div>
-                            <small class="text-muted">Status</small>
-                        </div>
+                    <div class="col-4">
+                        <div class="h5 mb-0 text-white" id="profile-branch">-</div>
+                        <small class="text-white-50">Branch</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="h5 mb-0 text-white" id="profile-status">-</div>
+                        <small class="text-white-50">Status</small>
                     </div>
                 </div>
             </div>
         </div>
         
         <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-info-circle me-2"></i>Quick Overview
-                    </h5>
+            <div class="stats-card">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-coffee text-primary me-2 fs-5"></i>
+                    <h5 class="mb-0 text-primary">Quick Overview</h5>
                 </div>
-                <div class="card-body">
-                    <div class="row" id="profile-overview">
-                        <!-- Content will be loaded dynamically -->
-                        <div class="col-12 text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
+                <div class="row" id="profile-overview">
+                    <!-- Content will be loaded dynamically -->
+                    <div class="col-12 text-center py-4">
+                        <div class="spinner-border" style="color: var(--primary-color);" role="status">
+                            <span class="visually-hidden">Loading...</span>
                         </div>
                     </div>
                 </div>
@@ -82,36 +77,38 @@
     <!-- Profile Details Tabs -->
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <ul class="nav nav-tabs card-header-tabs" id="profileTabs" role="tablist">
+            <div class="stats-card" style="padding: 0; overflow: hidden;">
+                <div class="card-header" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); border: none; margin: 0;">
+                    <ul class="nav nav-tabs card-header-tabs border-0" id="profileTabs" role="tablist" 
+                        style="border-bottom: none !important;">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" 
-                                    data-bs-target="#personal" type="button" role="tab">
+                            <button class="nav-link active text-white border-0" id="personal-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#personal" type="button" role="tab"
+                                    style="background: rgba(255,255,255,0.1); border-radius: 8px 8px 0 0;">
                                 <i class="fas fa-user me-2"></i>Personal Information
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="employment-tab" data-bs-toggle="tab" 
+                            <button class="nav-link text-white-50 border-0" id="employment-tab" data-bs-toggle="tab" 
                                     data-bs-target="#employment" type="button" role="tab">
-                                <i class="fas fa-briefcase me-2"></i>Employment Details
+                                <i class="fas fa-coffee me-2"></i>Employment Details
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="contact-tab" data-bs-toggle="tab" 
+                            <button class="nav-link text-white-50 border-0" id="contact-tab" data-bs-toggle="tab" 
                                     data-bs-target="#contact" type="button" role="tab">
                                 <i class="fas fa-phone me-2"></i>Contact Information
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="documents-tab" data-bs-toggle="tab" 
+                            <button class="nav-link text-white-50 border-0" id="documents-tab" data-bs-toggle="tab" 
                                     data-bs-target="#documents" type="button" role="tab">
                                 <i class="fas fa-file-alt me-2"></i>Documents
                             </button>
                         </li>
                     </ul>
                 </div>
-                <div class="card-body">
+                <div class="card-body" style="padding: 30px;">
                     <div class="tab-content" id="profileTabContent">
                         <!-- Personal Information Tab -->
                         <div class="tab-pane fade show active" id="personal" role="tabpanel">
@@ -119,14 +116,17 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="first_name" name="first_name" required>
+                                            <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="full_name" name="full_name" required 
+                                                   placeholder="Enter your full name">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="last_name" name="last_name" required>
+                                            <label for="employee_number" class="form-label">Employee Number</label>
+                                            <input type="text" class="form-control" id="employee_number" name="employee_number" readonly
+                                                   style="background-color: #f8f9fa;">
+                                            <div class="form-text">Auto-generated by system</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -148,21 +148,32 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="nationality" class="form-label">Nationality</label>
-                                            <input type="text" class="form-control" id="nationality" name="nationality" placeholder="e.g., Indonesian">
+                                            <label for="id_number" class="form-label">ID Number (KTP)</label>
+                                            <input type="text" class="form-control" id="id_number" name="id_number" 
+                                                   placeholder="16 digit KTP number" maxlength="16">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="id_number" class="form-label">ID Number (KTP/Passport)</label>
-                                            <input type="text" class="form-control" id="id_number" name="id_number" placeholder="Enter ID number">
+                                            <label for="blood_type" class="form-label">Blood Type</label>
+                                            <select class="form-select" id="blood_type" name="blood_type">
+                                                <option value="">Select blood type</option>
+                                                <option value="A+">A+</option>
+                                                <option value="A-">A-</option>
+                                                <option value="B+">B+</option>
+                                                <option value="B-">B-</option>
+                                                <option value="AB+">AB+</option>
+                                                <option value="AB-">AB-</option>
+                                                <option value="O+">O+</option>
+                                                <option value="O-">O-</option>
+                                            </select>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="mb-3">
-                                            <label for="bio" class="form-label">Bio</label>
+                                            <label for="bio" class="form-label">About Me</label>
                                             <textarea class="form-control" id="bio" name="bio" rows="3" 
-                                                      placeholder="Tell us about yourself..."></textarea>
+                                                      placeholder="Share something about yourself, your coffee passion, or experience..."></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -179,59 +190,93 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">Employee ID</label>
-                                        <input type="text" class="form-control" id="employee_id" readonly>
-                                        <div class="form-text">This is auto-generated and cannot be changed</div>
+                                        <label class="form-label"><i class="fas fa-id-badge me-2"></i>Employee Number</label>
+                                        <input type="text" class="form-control" id="employee_id" readonly style="background-color: #f8f9fa;">
+                                        <div class="form-text">Auto-generated by system</div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">Join Date</label>
-                                        <input type="text" class="form-control" id="join_date" readonly>
+                                        <label class="form-label"><i class="fas fa-calendar-plus me-2"></i>Hire Date</label>
+                                        <input type="text" class="form-control" id="join_date" readonly style="background-color: #f8f9fa;">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">Current Position</label>
-                                        <input type="text" class="form-control" id="position" readonly>
+                                        <label class="form-label"><i class="fas fa-coffee me-2"></i>Position</label>
+                                        <input type="text" class="form-control" id="position" readonly style="background-color: #f8f9fa;">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">Employment Status</label>
-                                        <input type="text" class="form-control" id="employment_status" readonly>
+                                        <label class="form-label"><i class="fas fa-user-check me-2"></i>Employment Status</label>
+                                        <input type="text" class="form-control" id="employment_status" readonly style="background-color: #f8f9fa;">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">Department</label>
-                                        <input type="text" class="form-control" id="department" readonly>
+                                        <label class="form-label"><i class="fas fa-clock me-2"></i>Employment Type</label>
+                                        <input type="text" class="form-control" id="employment_type" readonly style="background-color: #f8f9fa;">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">Direct Supervisor</label>
-                                        <input type="text" class="form-control" id="supervisor" readonly>
+                                        <label class="form-label"><i class="fas fa-dollar-sign me-2"></i>Hourly Rate</label>
+                                        <input type="text" class="form-control" id="hourly_rate" readonly style="background-color: #f8f9fa;">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label"><i class="fas fa-store me-2"></i>Primary Branch</label>
+                                        <input type="text" class="form-control" id="primary_branch" readonly style="background-color: #f8f9fa;">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label"><i class="fas fa-building me-2"></i>Department</label>
+                                        <input type="text" class="form-control" id="department" readonly style="background-color: #f8f9fa;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Work Schedule -->
+                            <div class="mt-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-calendar-week text-primary me-2"></i>
+                                    <h6 class="mb-0 text-primary">Work Schedule</h6>
+                                </div>
+                                <div id="work-schedule" class="stats-card">
+                                    <div class="text-center py-3">
+                                        <div class="spinner-border spinner-border-sm" style="color: var(--primary-color);" role="status"></div>
+                                        <p class="text-muted mt-2 mb-0">Loading schedule...</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Assigned Branches -->
                             <div class="mt-4">
-                                <h6>Assigned Branches</h6>
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                                    <h6 class="mb-0 text-primary">Assigned Branches</h6>
+                                </div>
                                 <div id="assigned-branches">
                                     <div class="text-center py-3">
-                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                        <div class="spinner-border spinner-border-sm" style="color: var(--primary-color);" role="status"></div>
+                                        <p class="text-muted mt-2 mb-0">Loading branches...</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Current Roles -->
                             <div class="mt-4">
-                                <h6>Current Roles & Permissions</h6>
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-user-shield text-primary me-2"></i>
+                                    <h6 class="mb-0 text-primary">Current Roles & Permissions</h6>
+                                </div>
                                 <div id="current-roles">
                                     <div class="text-center py-3">
-                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                        <div class="spinner-border spinner-border-sm" style="color: var(--primary-color);" role="status"></div>
+                                        <p class="text-muted mt-2 mb-0">Loading roles...</p>
                                     </div>
                                 </div>
                             </div>
@@ -243,37 +288,82 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                                            <input type="email" class="form-control" id="email" name="email" required readonly>
-                                            <div class="form-text">Email cannot be changed. Contact HR if needed.</div>
+                                            <label for="email" class="form-label">
+                                                <i class="fas fa-envelope me-2"></i>Email Address <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="email" class="form-control" id="email" name="email" required readonly
+                                                   style="background-color: #f8f9fa;">
+                                            <div class="form-text">
+                                                <i class="fas fa-info-circle me-1"></i>Email cannot be changed. Contact HR if needed.
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="phone" class="form-label">Phone Number</label>
+                                            <label for="phone" class="form-label">
+                                                <i class="fas fa-phone me-2"></i>Phone Number
+                                            </label>
                                             <input type="tel" class="form-control" id="phone" name="phone" 
-                                                   placeholder="e.g., +62812345678">
+                                                   placeholder="e.g., +62812-3456-7890">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="emergency_contact_name" class="form-label">Emergency Contact Name</label>
+                                            <label for="emergency_contact_name" class="form-label">
+                                                <i class="fas fa-user-plus me-2"></i>Emergency Contact Name
+                                            </label>
                                             <input type="text" class="form-control" id="emergency_contact_name" 
-                                                   name="emergency_contact_name" placeholder="Full name">
+                                                   name="emergency_contact_name" placeholder="Contact person name">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="emergency_contact_phone" class="form-label">Emergency Contact Phone</label>
+                                            <label for="emergency_contact_phone" class="form-label">
+                                                <i class="fas fa-phone-alt me-2"></i>Emergency Contact Phone
+                                            </label>
                                             <input type="tel" class="form-control" id="emergency_contact_phone" 
-                                                   name="emergency_contact_phone" placeholder="Phone number">
+                                                   name="emergency_contact_phone" placeholder="Emergency contact number">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="emergency_relation" class="form-label">
+                                                <i class="fas fa-heart me-2"></i>Relationship
+                                            </label>
+                                            <select class="form-select" id="emergency_relation" name="emergency_relation">
+                                                <option value="">Select relationship</option>
+                                                <option value="parent">Parent</option>
+                                                <option value="spouse">Spouse</option>
+                                                <option value="sibling">Sibling</option>
+                                                <option value="child">Child</option>
+                                                <option value="friend">Friend</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="transportation" class="form-label">
+                                                <i class="fas fa-car me-2"></i>Transportation
+                                            </label>
+                                            <select class="form-select" id="transportation" name="transportation">
+                                                <option value="">Select transportation</option>
+                                                <option value="motorcycle">Motorcycle</option>
+                                                <option value="car">Car</option>
+                                                <option value="public_transport">Public Transport</option>
+                                                <option value="bicycle">Bicycle</option>
+                                                <option value="walking">Walking</option>
+                                                <option value="other">Other</option>
+                                            </select>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="mb-3">
-                                            <label for="address" class="form-label">Address</label>
+                                            <label for="address" class="form-label">
+                                                <i class="fas fa-map-marker-alt me-2"></i>Home Address
+                                            </label>
                                             <textarea class="form-control" id="address" name="address" rows="3" 
-                                                      placeholder="Full address..."></textarea>
+                                                      placeholder="Complete home address (street, city, postal code)"></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -289,50 +379,59 @@
                         <div class="tab-pane fade" id="documents" role="tabpanel">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h6 class="card-title">Upload Documents</h6>
-                                            <form id="documentUploadForm" enctype="multipart/form-data">
-                                                <div class="mb-3">
-                                                    <label for="document_type" class="form-label">Document Type</label>
-                                                    <select class="form-select" id="document_type" name="document_type" required>
-                                                        <option value="">Select document type</option>
-                                                        <option value="cv">CV/Resume</option>
-                                                        <option value="certificate">Certificate</option>
-                                                        <option value="id_card">ID Card Copy</option>
-                                                        <option value="contract">Employment Contract</option>
-                                                        <option value="other">Other</option>
-                                                    </select>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label for="document_file" class="form-label">Choose File</label>
-                                                    <input type="file" class="form-control" id="document_file" name="document_file" 
-                                                           accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required>
-                                                    <div class="form-text">Accepted formats: PDF, JPG, PNG, DOC, DOCX (max 5MB)</div>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label for="document_description" class="form-label">Description (Optional)</label>
-                                                    <input type="text" class="form-control" id="document_description" 
-                                                           name="description" placeholder="Brief description">
-                                                </div>
-                                                <button type="submit" class="btn btn-primary">
-                                                    <i class="fas fa-upload me-2"></i>Upload Document
-                                                </button>
-                                            </form>
+                                    <div class="stats-card">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <i class="fas fa-upload text-primary me-2"></i>
+                                            <h6 class="mb-0 text-primary">Upload Documents</h6>
                                         </div>
+                                        <form id="documentUploadForm" enctype="multipart/form-data">
+                                            <div class="mb-3">
+                                                <label for="document_type" class="form-label">Document Type</label>
+                                                <select class="form-select" id="document_type" name="document_type" required>
+                                                    <option value="">Select document type</option>
+                                                    <option value="id_card">KTP (ID Card)</option>
+                                                    <option value="family_card">Kartu Keluarga (Family Card)</option>
+                                                    <option value="cv">CV/Resume</option>
+                                                    <option value="diploma">Diploma/Certificate</option>
+                                                    <option value="health_certificate">Health Certificate</option>
+                                                    <option value="food_safety_cert">Food Safety Certificate</option>
+                                                    <option value="barista_cert">Barista Certificate</option>
+                                                    <option value="contract">Employment Contract</option>
+                                                    <option value="bank_account">Bank Account Info</option>
+                                                    <option value="tax_number">NPWP (Tax ID)</option>
+                                                    <option value="other">Other</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="document_file" class="form-label">Choose File</label>
+                                                <input type="file" class="form-control" id="document_file" name="document_file" 
+                                                       accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required>
+                                                <div class="form-text">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Accepted: PDF, JPG, PNG, DOC, DOCX (max 5MB)
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="document_description" class="form-label">Description (Optional)</label>
+                                                <input type="text" class="form-control" id="document_description" 
+                                                       name="description" placeholder="Brief description or notes">
+                                            </div>
+                                            <button type="submit" class="btn" style="background-color: var(--primary-color); color: white;">
+                                                <i class="fas fa-upload me-2"></i>Upload Document
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                                 
                                 <div class="col-md-6">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h6 class="mb-0">My Documents</h6>
+                                    <div class="stats-card">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <i class="fas fa-folder text-primary me-2"></i>
+                                            <h6 class="mb-0 text-primary">My Documents</h6>
                                         </div>
-                                        <div class="card-body">
-                                            <div id="documents-list">
-                                                <div class="text-center py-3">
-                                                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                                                </div>
+                                        <div id="documents-list">
+                                            <div class="text-center py-3">
+                                                <div class="spinner-border spinner-border-sm" style="color: var(--primary-color);" role="status"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -421,6 +520,58 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+/* Custom tab styling */
+#profileTabs .nav-link {
+    transition: all 0.3s ease;
+    margin-right: 8px;
+    border-radius: 8px 8px 0 0 !important;
+}
+
+#profileTabs .nav-link:hover {
+    background: rgba(255,255,255,0.15) !important;
+    color: white !important;
+}
+
+#profileTabs .nav-link.active {
+    background: rgba(255,255,255,0.2) !important;
+    color: white !important;
+}
+
+/* Profile photo hover effect */
+#profile-photo {
+    transition: all 0.3s ease;
+}
+
+.position-relative:hover #profile-photo {
+    transform: scale(1.05);
+}
+
+/* Form styling improvements */
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
+}
+
+/* Loading spinner coffee color */
+.spinner-border {
+    color: var(--primary-color) !important;
+}
+
+/* Enhanced button styling */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--dark-color);
+    border-color: var(--dark-color);
+}
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -544,12 +695,12 @@ let profileManager = {
         const employee = data.employee || {};
         
         // Personal info
-        document.getElementById('first_name').value = data.first_name || '';
-        document.getElementById('last_name').value = data.last_name || '';
+        document.getElementById('full_name').value = employee.full_name || data.name || '';
+        document.getElementById('employee_number').value = employee.employee_number || 'Not assigned';
         document.getElementById('date_of_birth').value = employee.date_of_birth || '';
         document.getElementById('gender').value = employee.gender || '';
-        document.getElementById('nationality').value = employee.nationality || '';
         document.getElementById('id_number').value = employee.id_number || '';
+        document.getElementById('blood_type').value = employee.blood_type || '';
         document.getElementById('bio').value = employee.bio || '';
         
         // Contact info
@@ -557,15 +708,19 @@ let profileManager = {
         document.getElementById('phone').value = employee.phone || '';
         document.getElementById('emergency_contact_name').value = employee.emergency_contact_name || '';
         document.getElementById('emergency_contact_phone').value = employee.emergency_contact_phone || '';
+        document.getElementById('emergency_relation').value = employee.emergency_relation || '';
+        document.getElementById('transportation').value = employee.transportation || '';
         document.getElementById('address').value = employee.address || '';
         
         // Employment (readonly)
-        document.getElementById('employee_id').value = employee.employee_id || 'Not assigned';
+        document.getElementById('employee_id').value = employee.employee_number || 'Not assigned';
         document.getElementById('join_date').value = employee.hire_date ? Utils.formatDate(employee.hire_date) : 'Not set';
-        document.getElementById('position').value = employee.position || 'Not assigned';
+        document.getElementById('position').value = employee.position?.name || 'Not assigned';
         document.getElementById('employment_status').value = employee.status || 'Active';
+        document.getElementById('employment_type').value = employee.employment_type || 'Not assigned';
+        document.getElementById('hourly_rate').value = employee.hourly_rate ? 'Rp ' + employee.hourly_rate.toLocaleString() : 'Not set';
+        document.getElementById('primary_branch').value = employee.primary_branch?.name || 'Not assigned';
         document.getElementById('department').value = employee.department || 'Not assigned';
-        document.getElementById('supervisor').value = employee.supervisor?.name || 'Not assigned';
     },
     
     async loadEmploymentDetails() {

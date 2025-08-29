@@ -53,7 +53,7 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
         Route::delete('tokens/{tokenId}', [AuthController::class, 'revokeToken']);
         Route::get('me', [AuthController::class, 'me']);
         Route::put('profile', [AuthController::class, 'updateProfile']);
-        Route::post('profile/photo', [AuthController::class, 'uploadPhoto']);
+        Route::post('profile/photo', [AuthController::class, 'updatePhoto']);
         Route::put('password', [AuthController::class, 'changePassword']);
     });
     
