@@ -75,17 +75,9 @@
             <i class="fas fa-store fa-3x text-muted"></i>
         </div>
         <h5 class="text-muted">No branches found</h5>
-        <p class="text-muted">
-            @if(request('search') || request('status'))
-                No branches match your search criteria.
-            @else
-                Get started by creating your first branch.
-            @endif
-        </p>
-        @if(!request('search') && !request('status'))
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBranchModal">
-                <i class="fas fa-plus me-2"></i>Add New Branch
-            </button>
-        @endif
+        <p class="text-muted">Get started by creating your first branch.</p>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBranchModal">
+            <i class="fas fa-plus me-2"></i>Add New Branch
+        </button>
     </div>
 @endif
