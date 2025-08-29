@@ -1,5 +1,5 @@
 <div class="table-responsive">
-    <table class="table table-hover">
+    <table class="table table-hover" id="employeesTable">
         <thead>
             <tr>
                 <th>Employee</th>
@@ -84,16 +84,3 @@
         </tbody>
     </table>
 </div>
-
-@if($employees->hasPages())
-    <div class="d-flex justify-content-between align-items-center mt-3">
-        <div>
-            <small class="text-muted">
-                Showing {{ $employees->firstItem() }} to {{ $employees->lastItem() }} of {{ $employees->total() }} results
-            </small>
-        </div>
-        <div>
-            {{ $employees->links() }}
-        </div>
-    </div>
-@endif

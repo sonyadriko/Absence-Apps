@@ -69,13 +69,6 @@
             @endforeach
         </tbody>
     </table>
-    
-    <!-- Pagination -->
-    @if($branches->hasPages())
-        <div class="d-flex justify-content-center mt-3">
-            {{ $branches->links() }}
-        </div>
-    @endif
 @else
     <div class="text-center py-5">
         <div class="mb-3">

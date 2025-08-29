@@ -14,37 +14,7 @@ class BranchController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Branch::query();
-        
-        // Search functionality
-        if ($request->has('search') && !empty($request->search)) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%")
-                  ->orWhere('address', 'like', "%{$search}%");
-            });
-        }
-        
-        // Filter by active status
-        if ($request->has('status') && $request->status !== '') {
-            $query->where('is_active', $request->status);
-        }
-        
-        $branches = $query->withCount('employees')->orderBy('created_at', 'desc')->paginate(10);
-        
-        // If this is an AJAX request, return JSON data like the roles controller
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'branches' => $branches->items(),
-                'pagination' => [
-                    'current_page' => $branches->currentPage(),
-                    'last_page' => $branches->lastPage(),
-                    'per_page' => $branches->perPage(),
-                    'total' => $branches->total(),
-                ]
-            ]);
-        }
+        $branches = Branch::withCount('employees')->orderBy('created_at', 'desc')->get();
         
         return view('hr-central.branches.index', compact('branches'));
     }

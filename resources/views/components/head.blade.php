@@ -123,11 +123,31 @@
         border: none;
     }
 
+
     /* Mobile Responsive */
     @media (max-width: 768px) {
         .container-fluid {
             padding-left: 15px;
             padding-right: 15px;
+        }
+        
+        .dataTables_length,
+        .dataTables_filter,
+        .dataTables_info,
+        .dataTables_paginate {
+            text-align: center !important;
+            margin: 8px 0 !important;
+        }
+        
+        .dataTables_filter input {
+            width: 100% !important;
+            margin: 4px 0 !important;
+        }
+        
+        .dataTables_paginate .paginate_button {
+            padding: 4px 8px !important;
+            margin: 0 1px !important;
+            font-size: 12px !important;
         }
     }
 </style>

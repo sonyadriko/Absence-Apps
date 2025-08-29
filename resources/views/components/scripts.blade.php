@@ -340,27 +340,9 @@ window.Utils = {
     }
 };
 
-// Initialize DataTables default settings
+// Initialize DataTables default settings (BASIC)
 $.extend(true, $.fn.dataTable.defaults, {
-    pageLength: 25,
-    responsive: true,
-    language: {
-        search: "Search:",
-        lengthMenu: "Show _MENU_ entries per page",
-        info: "Showing _START_ to _END_ of _TOTAL_ entries",
-        infoEmpty: "No entries available",
-        emptyTable: "No data available in table",
-        paginate: {
-            first: "First",
-            last: "Last",
-            next: "Next",
-            previous: "Previous"
-        }
-    },
-    dom: '<"d-flex justify-content-between align-items-center mb-3"<"d-flex align-items-center"l><"d-flex align-items-center"f>>rtip',
-    columnDefs: [
-        { targets: '_all', className: 'align-middle' }
-    ]
+    pageLength: 10
 });
 
 // Auto-hide alerts after 5 seconds
@@ -385,6 +367,7 @@ function adjustMainContent() {
         mainContent.style.marginLeft = isCollapsed ? '0' : '280px';
     }
 }
+
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {

@@ -38,7 +38,7 @@
             <div class="stats-card">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <div class="h4 mb-0 fw-bold" id="totalBranches">{{ $branches->total() }}</div>
+                        <div class="h4 mb-0 fw-bold" id="totalBranches">{{ $branches->count() }}</div>
                         <div class="text-muted small">Total Branches</div>
                     </div>
                     <div class="fs-2 text-primary">
@@ -88,40 +88,6 @@
         </div>
     </div>
 
-    <!-- Search and Filter -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form id="searchForm" class="row g-3" method="GET" action="{{ route('hr-central.branches.index') }}">
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-search"></i>
-                        </span>
-                        <input type="text" class="form-control" name="search" 
-                               placeholder="Search branches..." 
-                               value="{{ request('search') }}">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <select name="status" class="form-select">
-                        <option value="">All Status</option>
-                        <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Active</option>
-                        <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Inactive</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-filter me-1"></i>Filter
-                    </button>
-                </div>
-                <div class="col-md-2">
-                    <button type="button" class="btn btn-outline-secondary w-100" onclick="clearSearch()">
-                        <i class="fas fa-times me-1"></i>Clear
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <!-- Branches Table -->
     <div class="card">
@@ -198,137 +164,16 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Don't call loadBranches() on page load - use existing data from server
-    // loadBranches(); // This will be called only when searching/filtering
-    
-    // Initialize DataTable if not already initialized
-    if (!$.fn.DataTable.isDataTable('#branchesDataTable')) {
-        $('#branchesDataTable').DataTable({
-            ordering: true,
-            searching: false, // We'll use our custom search
-            paging: false, // We'll use Laravel pagination
-            info: false,
-            columnDefs: [
-                { orderable: false, targets: [-1] } // Actions column
-            ]
-        });
-    }
-});
-
-// Load branches with search/filter
-function loadBranches() {
-    const formData = $('#searchForm').serialize();
-    
-    $.get('/api/hr-central/branches', formData)
-        .done(function(data) {
-            updateBranchesTable(data.branches);
-            updateStats(data);
-        })
-        .fail(function() {
-            showAlert('error', 'Error loading branches');
-        });
-}
-
-// Update branches table
-function updateBranchesTable(branches) {
-    const tbody = $('#branchesDataTable tbody');
-    tbody.empty();
-    
-    if (branches.length === 0) {
-        tbody.append(`
-            <tr>
-                <td colspan="6" class="text-center py-5">
-                    <div class="mb-3">
-                        <i class="fas fa-store fa-3x text-muted"></i>
-                    </div>
-                    <h5 class="text-muted">No branches found</h5>
-                    <p class="text-muted">No branches match your search criteria.</p>
-                </td>
-            </tr>
-        `);
-        return;
-    }
-    
-    branches.forEach(branch => {
-        const row = `
-            <tr>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <div class="branch-icon me-2">
-                            <i class="fas fa-store text-primary"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold">${branch.name}</div>
-                            <div class="small text-muted">${branch.code}</div>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <div class="small">
-                        ${branch.address ? branch.address.substring(0, 50) + (branch.address.length > 50 ? '...' : '') : 'No address'}
-                        ${branch.phone ? '<br><i class="fas fa-phone me-1"></i>' + branch.phone : ''}
-                    </div>
-                </td>
-                <td>
-                    <div class="small">
-                        <i class="fas fa-map-marker-alt me-1"></i>
-                        ${branch.latitude}, ${branch.longitude}
-                        <br>
-                        <i class="fas fa-circle me-1"></i>${branch.radius}m radius
-                    </div>
-                </td>
-                <td>
-                    ${branch.is_active 
-                        ? '<span class="badge bg-success">Active</span>' 
-                        : '<span class="badge bg-danger">Inactive</span>'}
-                </td>
-                <td>
-                    <span class="badge bg-info">${branch.employees_count || 0} employees</span>
-                </td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-info" onclick="viewBranch(${branch.id})" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-outline-warning" onclick="editBranch(${branch.id})" title="Edit Branch">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-outline-${branch.is_active ? 'secondary' : 'success'}" 
-                                onclick="toggleBranchStatus(${branch.id})" 
-                                title="${branch.is_active ? 'Deactivate' : 'Activate'} Branch">
-                            <i class="fas fa-${branch.is_active ? 'pause' : 'play'}"></i>
-                        </button>
-                        <button class="btn btn-outline-danger" onclick="deleteBranch(${branch.id}, '${branch.name}')" title="Delete Branch">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-        tbody.append(row);
+    // Initialize DataTables with Bootstrap 5
+    $('#branchesDataTable').DataTable({
+        responsive: true,
+        pageLength: 10,
+        order: [[0, 'asc']],
+        columnDefs: [
+            { orderable: false, targets: [-1] } // Actions column
+        ]
     });
-}
-
-// Update statistics
-function updateStats(data) {
-    if (data && data.branches) {
-        const totalBranches = data.branches.length;
-        const activeBranches = data.branches.filter(branch => branch.is_active).length;
-        const inactiveBranches = totalBranches - activeBranches;
-        const totalEmployees = data.branches.reduce((sum, branch) => sum + (branch.employees_count || 0), 0);
-        
-        $('#totalBranches').text(totalBranches);
-        $('#activeBranches').text(activeBranches);
-        $('#inactiveBranches').text(inactiveBranches);
-        $('#totalEmployees').text(totalEmployees);
-    }
-}
-
-// Search form will use regular form submission, not AJAX
-// $('#searchForm').on('submit', function(e) {
-//     e.preventDefault();
-//     loadBranches();
-// });
+});
 
 // Create branch form
 $('#createBranchForm').on('submit', function(e) {
@@ -348,9 +193,7 @@ function submitForm(form, url, method) {
     const $form = $(form);
     const $submitBtn = $form.find('button[type="submit"]');
     
-    // Show loading state
-    $submitBtn.prop('disabled', true);
-    $submitBtn.find('i').removeClass().addClass('fas fa-spinner fa-spin');
+    Utils.setButtonLoading($submitBtn[0], true);
     
     // Clear previous errors
     $form.find('.is-invalid').removeClass('is-invalid');
@@ -373,10 +216,9 @@ function submitForm(form, url, method) {
     })
     .done(function(response) {
         if (response.success) {
-            showAlert('success', response.message);
+            Utils.showToast(response.message, 'success');
             $form.closest('.modal').modal('hide');
-            loadBranches();
-            $form[0].reset();
+            location.reload();
         }
     })
     .fail(function(xhr) {
@@ -387,22 +229,14 @@ function submitForm(form, url, method) {
                 $field.addClass('is-invalid');
                 $field.after(`<div class="invalid-feedback">${errors[field][0]}</div>`);
             });
-            showAlert('error', 'Please check the form for errors');
+            Utils.showToast('Please check the form for errors', 'error');
         } else {
-            showAlert('error', 'An error occurred. Please try again.');
+            Utils.showToast('An error occurred. Please try again.', 'error');
         }
     })
     .always(function() {
-        $submitBtn.prop('disabled', false);
-        $submitBtn.find('i').removeClass().addClass('fas fa-save');
+        Utils.setButtonLoading($submitBtn[0], false);
     });
-}
-
-// Clear search
-function clearSearch() {
-    $('#searchForm')[0].reset();
-    // Reload the page to show all branches
-    window.location.href = '{{ route('hr-central.branches.index') }}';
 }
 
 // Edit branch
@@ -414,7 +248,7 @@ function editBranch(id) {
             $('#editBranchModal').modal('show');
         })
         .fail(function() {
-            showAlert('error', 'Error loading branch data');
+            Utils.showToast('Error loading branch data', 'error');
         });
 }
 
@@ -429,12 +263,12 @@ function toggleBranchStatus(id) {
     })
     .done(function(response) {
         if (response.success) {
-            showAlert('success', response.message);
-            loadBranches();
+            Utils.showToast(response.message, 'success');
+            location.reload();
         }
     })
     .fail(function() {
-        showAlert('error', 'Error updating branch status');
+        Utils.showToast('Error updating branch status', 'error');
     });
 }
 
@@ -445,38 +279,7 @@ function exportBranches() {
 
 // Refresh branches
 function refreshBranches() {
-    // Reload the page to refresh all data
-    window.location.reload();
-}
-
-// Show alert
-function showAlert(type, message) {
-    const alertClass = {
-        'success': 'alert-success',
-        'error': 'alert-danger',
-        'info': 'alert-info',
-        'warning': 'alert-warning'
-    }[type] || 'alert-info';
-    
-    const icon = {
-        'success': 'fas fa-check-circle',
-        'error': 'fas fa-exclamation-circle',
-        'info': 'fas fa-info-circle',
-        'warning': 'fas fa-exclamation-triangle'
-    }[type] || 'fas fa-info-circle';
-    
-    const alert = $(`
-        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-            <i class="${icon} me-2"></i>${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `);
-    
-    $('.main-content').prepend(alert);
-    
-    setTimeout(() => {
-        alert.fadeOut();
-    }, 5000);
+    location.reload();
 }
 </script>
 @endpush

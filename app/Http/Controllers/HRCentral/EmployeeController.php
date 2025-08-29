@@ -44,59 +44,11 @@ class EmployeeController extends Controller
             $query->where('employment_type', $request->employment_type);
         }
         
-        $employees = $query->orderBy('created_at', 'desc')->paginate(15);
+        $employees = $query->orderBy('created_at', 'desc')->get();
         
         // Get filter options
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
         $positions = Position::orderBy('name')->get();
-        
-        // If this is an AJAX request, return JSON data
-        if ($request->ajax() || $request->wantsJson()) {
-            // Get total statistics for the filtered results (not just current page)
-            $totalQuery = Employee::query()->with(['position', 'primaryBranch']);
-            
-            // Apply same filters to get total stats
-            if ($request->has('search') && !empty($request->search)) {
-                $search = $request->search;
-                $totalQuery->where(function($q) use ($search) {
-                    $q->where('full_name', 'like', "%{$search}%")
-                      ->orWhere('employee_number', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%")
-                      ->orWhere('phone', 'like', "%{$search}%");
-                });
-            }
-            
-            if ($request->has('status') && $request->status !== '') {
-                $totalQuery->where('status', $request->status);
-            }
-            
-            if ($request->has('branch') && $request->branch !== '') {
-                $totalQuery->where('primary_branch_id', $request->branch);
-            }
-            
-            if ($request->has('employment_type') && $request->employment_type !== '') {
-                $totalQuery->where('employment_type', $request->employment_type);
-            }
-            
-            // Get statistics
-            $totalStats = [
-                'total' => $totalQuery->count(),
-                'active' => (clone $totalQuery)->where('status', 'active')->count(),
-                'inactive' => (clone $totalQuery)->where('status', 'inactive')->count(),
-                'terminated' => (clone $totalQuery)->where('status', 'terminated')->count(),
-            ];
-            
-            return response()->json([
-                'employees' => $employees->items(),
-                'pagination' => [
-                    'current_page' => $employees->currentPage(),
-                    'last_page' => $employees->lastPage(),
-                    'per_page' => $employees->perPage(),
-                    'total' => $employees->total(),
-                ],
-                'statistics' => $totalStats
-            ]);
-        }
         
         return view('hr-central.employees.index', compact('employees', 'branches', 'positions'));
     }
