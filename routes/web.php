@@ -8,6 +8,7 @@ use App\Http\Controllers\HRCentral\BranchController;
 use App\Http\Controllers\HRCentral\EmployeeController;
 use App\Http\Controllers\HRCentral\AttendanceController as HRCentralAttendanceController;
 use App\Http\Controllers\ApprovalController;
+use App\Http\Controllers\ReportsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -123,9 +124,7 @@ Route::middleware(['auth'])->group(function () {
     // Approval Center
     Route::get('/approvals', [ApprovalController::class, 'index'])->name('approvals.index');
     
-    Route::get('/reports', function() {
-        return view('employee.dashboard');
-    })->name('reports.index');
+    Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
 });
 
 // API routes for AJAX calls
@@ -159,5 +158,15 @@ Route::prefix('api')->middleware(['auth'])->group(function () {
         Route::get('/{leave_request}', [ApprovalController::class, 'getLeaveRequestDetails']);
         Route::post('/{leave_request}/approve', [ApprovalController::class, 'approve']);
         Route::post('/{leave_request}/reject', [ApprovalController::class, 'reject']);
+    });
+    
+    // Reports APIs
+    Route::prefix('reports')->group(function () {
+        Route::get('/dashboard-stats', [ReportsController::class, 'getDashboardStats']);
+        Route::get('/attendance', [ReportsController::class, 'getAttendanceReport']);
+        Route::get('/leave', [ReportsController::class, 'getLeaveReport']);
+        Route::get('/performance', [ReportsController::class, 'getPerformanceReport']);
+        Route::get('/filter-options', [ReportsController::class, 'getFilterOptions']);
+        Route::post('/export', [ReportsController::class, 'export']);
     });
 });

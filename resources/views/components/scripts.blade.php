@@ -9,19 +9,6 @@
 // Global API configuration
 window.API = {
     baseURL: document.querySelector('meta[name="api-base-url"]').getAttribute('content'),
-    token: localStorage.getItem('auth_token'),
-    
-    // Set auth token
-    setToken(token) {
-        this.token = token;
-        localStorage.setItem('auth_token', token);
-    },
-    
-    // Remove auth token
-    removeToken() {
-        this.token = null;
-        localStorage.removeItem('auth_token');
-    },
     
     // Make API request
     async request(endpoint, options = {}) {
@@ -34,12 +21,9 @@ window.API = {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 ...options.headers
             },
+            credentials: 'same-origin', // Include session cookies
             ...options
         };
-        
-        if (this.token) {
-            config.headers.Authorization = `Bearer ${this.token}`;
-        }
         
         try {
             const response = await fetch(url, config);
@@ -69,7 +53,6 @@ window.API = {
             
             // Handle authentication errors
             if (error.message && (error.message.includes('Unauthorized') || error.message.includes('Unauthenticated'))) {
-                this.removeToken();
                 if (window.location.pathname !== '/login') {
                     window.location.href = '/login';
                 }
@@ -276,6 +259,22 @@ window.Utils = {
         }
     },
     
+    // Show loading state for element by ID
+    showLoading(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            this.setElementLoading(element, true);
+        }
+    },
+    
+    // Hide loading state for element by ID
+    hideLoading(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            this.setElementLoading(element, false);
+        }
+    },
+    
     // Confirm dialog
     async confirm(message, title = 'Confirmation') {
         return new Promise((resolve) => {
@@ -389,11 +388,6 @@ function adjustMainContent() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize API token from PHP session
-    @if(session('api_token'))
-        API.setToken('{{ session('api_token') }}');
-    @endif
-    
     // Adjust main content layout
     adjustMainContent();
     
@@ -471,5 +465,32 @@ $(document).on('submit', 'form', function() {
         margin-left: 0;
         padding: 20px;
     }
+}
+
+/* Loading state styles */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    border-top-color: #007bff;
+    animation: spin 1s linear infinite;
+    z-index: 1000;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 </style>
